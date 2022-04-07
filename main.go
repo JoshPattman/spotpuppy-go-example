@@ -19,5 +19,5 @@ func main() {
 	}
 	s := time.Since(t)
 	fmt.Println(int(steps/s.Seconds()), "ups")
-	fmt.Print("(", s/time.Duration(steps), " per update)")
+	fmt.Println("(", s/time.Duration(steps), " per update)")
 }

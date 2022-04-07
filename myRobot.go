@@ -2,6 +2,7 @@ package main
 
 import (
 	sp "github.com/JoshPattman/spotpuppy-go"
+	"github.com/JoshPattman/spotpuppy-go/arduinompu"
 	"math"
 	"time"
 )
@@ -17,7 +18,7 @@ type MyRobot struct {
 func NewRobot() *MyRobot {
 	return &MyRobot{
 		Quad:   sp.NewQuadrupedWithExtraMotors(sp.NewDirectMotorIKGenerator(), sp.NewDummyMotorController(), []string{"neck"}),
-		Sensor: sp.NewDummyRotationSensor(),
+		Sensor: arduinompu.NewArduinoMpu("/dev/ttyUSB0"),
 		CS:     sp.NewRollPitchCoordinateSystem(),
 		T:      0,
 		LT:     time.Now(),
