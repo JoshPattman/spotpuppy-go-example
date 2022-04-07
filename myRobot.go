@@ -41,14 +41,16 @@ func (r *MyRobot) Update() {
 	stepA := r.CS.TD(sp.DirUp.Mul(snA))
 	stepB := r.CS.TD(sp.DirUp.Mul(snB))
 	straightDown := r.CS.TD(sp.DirDown.Mul(restHeight))
-	flPos := r.Quad.ShoulderVec(sp.LegFrontLeft).Add(straightDown).Add(r.CS.TD(r.Quad.ShoulderVec(sp.LegFrontLeft).Inv()))
-	frPos := r.Quad.ShoulderVec(sp.LegFrontRight).Add(straightDown).Add(r.CS.TD(r.Quad.ShoulderVec(sp.LegFrontRight).Inv()))
-	blPos := r.Quad.ShoulderVec(sp.LegBackLeft).Add(straightDown).Add(r.CS.TD(r.Quad.ShoulderVec(sp.LegBackLeft).Inv()))
-	brPos := r.Quad.ShoulderVec(sp.LegBackRight).Add(straightDown).Add(r.CS.TD(r.Quad.ShoulderVec(sp.LegBackRight).Inv()))
-	r.Quad.SetLegPosition(sp.LegFrontLeft, flPos.Add(stepA))
-	r.Quad.SetLegPosition(sp.LegFrontRight, frPos.Add(stepB))
-	r.Quad.SetLegPosition(sp.LegBackLeft, blPos.Add(stepB))
-	r.Quad.SetLegPosition(sp.LegBackRight, brPos.Add(stepA))
+	for _, l := range sp.AllLegs {
+		floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.CS.TD(r.Quad.ShoulderVec(l).Inv()))
+		var step *sp.Vector3
+		if l == sp.LegFrontLeft || l == sp.LegBackRight {
+			step = stepA
+		} else {
+			step = stepB
+		}
+		r.Quad.SetLegPosition(l, floorPos.Add(step))
+	}
 	// Update quad
 	r.Quad.Update()
 }
