@@ -9,6 +9,7 @@ import (
 func main() {
 	r := NewRobot()
 	r.Quad.LoadFromFile("config.json")
+	r.Quad.SaveToFile("config.json")
 	t := time.Now()
 	ups := spotpuppy.NewUPSTimer(100)
 	steps := 100.0

@@ -16,7 +16,7 @@ type MyRobot struct {
 
 func NewRobot() *MyRobot {
 	return &MyRobot{
-		Quad:   sp.NewQuadruped(sp.NewDirectMotorIKGenerator(), sp.NewDummyMotorController()),
+		Quad:   sp.NewQuadrupedWithExtraMotors(sp.NewDirectMotorIKGenerator(), sp.NewDummyMotorController(), []string{"neck"}),
 		Sensor: sp.NewDummyRotationSensor(),
 		CS:     sp.NewRollPitchCoordinateSystem(),
 		T:      0,

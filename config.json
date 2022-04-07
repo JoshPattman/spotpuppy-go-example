@@ -54,7 +54,8 @@
 			"front_left.knee": -1,
 			"front_right.hip_x": -1,
 			"front_right.hip_z": -1,
-			"front_right.knee": -1
+			"front_right.knee": -1,
+			"neck": -1
 		}
 	},
 	"body_dimension_x": 10,
