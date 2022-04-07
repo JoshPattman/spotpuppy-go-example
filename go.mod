@@ -1,7 +1,7 @@
 module spotpuppy-proto
 
 require github.com/JoshPattman/spotpuppy-go v0.0.0
-
+require github.com/JoshPattman/spotpuppy-go/pca9685 v0.0.0
 require github.com/JoshPattman/spotpuppy-go/arduinompu v0.0.0
 
 require (
