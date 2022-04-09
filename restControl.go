@@ -3,6 +3,7 @@ package main
 import "fmt"
 import "net/http"
 import "encoding/json"
+import "os"
 
 func handleResponse[T InfoUpdate](res T)func (w http.ResponseWriter, r *http.Request){
     res.OnInfoChanged()
@@ -24,6 +25,9 @@ func handleResponse[T InfoUpdate](res T)func (w http.ResponseWriter, r *http.Req
     }
 }
 
+func quit (w http.ResponseWriter, r *http.Request){
+    os.Exit(0)
+}
 
 
 type InfoUpdate interface{
@@ -57,7 +61,7 @@ var (
 func startControlApi(r *MyRobot) {
     http.HandleFunc("/move", handleResponse(r.Mov))
     http.HandleFunc("/state", handleResponse(r.State))
-    http.HandleFunc("/gait", handleResponse(r.Gait))
+    http.HandleFunc("/quit", quit)
     //fmt.Println("Starting server...")
     panic(http.ListenAndServe(":10000", nil))
 }
