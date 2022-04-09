@@ -61,6 +61,7 @@ var (
 func startControlApi(r *MyRobot) {
     http.HandleFunc("/move", handleResponse(r.Mov))
     http.HandleFunc("/state", handleResponse(r.State))
+    http.HandleFunc("/gait", handleResponse(r.Gait))
     http.HandleFunc("/quit", quit)
     //fmt.Println("Starting server...")
     panic(http.ListenAndServe(":10000", nil))
