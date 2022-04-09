@@ -1,23 +1,27 @@
 package main
 
 import (
-	"fmt"
 	"github.com/JoshPattman/spotpuppy-go"
-	"time"
+	"runtime"
 )
 
 func main() {
-	r := NewRobot()
+	var r *MyRobot
+	if (runtime.GOARCH == "amd64"){
+		r = NewDummyRobot()
+	} else{
+		r = NewRobot()
+	}
 	r.Quad.LoadFromFile("config.json")
 	r.Quad.SaveToFile("config.json")
-	t := time.Now()
+	go updateRobotForever(r)
+	startControlApi(r)
+}
+
+func updateRobotForever(r *MyRobot){
 	ups := spotpuppy.NewUPSTimer(100)
-	steps := 100.0
-	for i := 0.0; i < steps; i++ {
+	for true {
 		r.Update()
 		ups.WaitForNext()
 	}
-	s := time.Since(t)
-	fmt.Println(int(steps/s.Seconds()), "ups")
-	fmt.Println("(", s/time.Duration(steps), " per update)")
 }

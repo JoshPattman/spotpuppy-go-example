@@ -21,4 +21,4 @@ replace github.com/JoshPattman/spotpuppy-go/arduinompu => ./../spotpuppy-go/ardu
 
 replace github.com/JoshPattman/spotpuppy-go/pca9685 => ./../spotpuppy-go/pca9685
 
-go 1.17
+go 1.18
