@@ -30,7 +30,7 @@ func NewRobot() *MyRobot {
 	q := sp.NewQuadrupedWithExtraMotors(sp.NewDirectMotorIKGenerator(), pca9685.NewPCAMotorController(), []string{"neck"})
 	return &MyRobot{
 		Quad:   q,
-		Sensor: arduinompu.NewArduinoMpu("/dev/ttyUSB0"),
+		Sensor: arduinompu.NewArduinoRotationSensor("/dev/ttyUSB0"),
 		CS:     sp.NewRollPitchCoordinateSystem(),
 		T:      0,
 		LT:     time.Now(),
