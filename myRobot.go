@@ -2,8 +2,6 @@ package main
 
 import (
 	sp "github.com/JoshPattman/spotpuppy-go"
-	"github.com/JoshPattman/spotpuppy-go/arduinompu"
-	"github.com/JoshPattman/spotpuppy-go/pca9685"
 	"math"
 	"time"
 )
@@ -27,10 +25,10 @@ const (
 )
 
 func NewRobot() *MyRobot {
-	q := sp.NewQuadrupedWithExtraMotors(sp.NewDirectMotorIKGenerator(), pca9685.NewPCAMotorController(), []string{"neck"})
+	q := sp.NewQuadrupedWithExtraMotors(sp.NewDirectMotorIKGenerator(), sp.NewPCAMotorController(), []string{"neck"})
 	return &MyRobot{
 		Quad:   q,
-		Sensor: arduinompu.NewArduinoRotationSensor("/dev/ttyUSB0"),
+		Sensor: sp.NewArduinoRotationSensor("/dev/ttyUSB0"),
 		CS:     sp.NewRollPitchCoordinateSystem(),
 		T:      0,
 		LT:     time.Now(),
