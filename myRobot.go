@@ -66,8 +66,10 @@ func (r *MyRobot) Update() {
 	clkA := math.Mod(r.T, 1.0)
 	clkB := math.Mod(r.T+0.5, 1.0)
 	// Update rotation sensor
-	r.CS.UpdateRollPitchFrom(r.Sensor)
-	if r.State.State == StateTrot{
+	roll, pitch := r.Sensor.GetRollPitch()
+	r.CS.SetRollPitch(roll, pitch)
+	hasFallen := math.Abs(roll) < 30 && math.Abs(pitch) < 30
+	if r.State.State == StateTrot && !hasFallen{
 		// Custom walking code
 		snA := math.Sin(clkA * 3.1415 * 2)
 		snB := math.Sin(clkB * 3.1415 * 2)
@@ -86,14 +88,22 @@ func (r *MyRobot) Update() {
 			}
 			r.Quad.SetLegPosition(l, floorPos.Add(step))
 		}
-	} else if r.State.State == StateStanding{
+	} else if r.State.State == StateStanding && !hasFallen{
+		// Stand but keep feet on the ground
 		straightDown := r.CS.TD(sp.DirDown.Mul(r.Gait.BodyHeight))
 		for _, l := range sp.AllLegs {
 			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.CS.TD(r.Quad.ShoulderVec(l).Inv()))
 			r.Quad.SetLegPosition(l, floorPos)
 		}
-	} else{
+	} else if !hasFallen{
+		// Stand still
 		localDown := sp.DirDown.Mul(r.Gait.BodyHeight)
+		for _, l := range sp.AllLegs {
+			r.Quad.SetLegPosition(l, localDown)
+		}
+	} else{
+		// Stand still at half height
+		localDown := sp.DirDown.Mul(r.Gait.BodyHeight/2)
 		for _, l := range sp.AllLegs {
 			r.Quad.SetLegPosition(l, localDown)
 		}
