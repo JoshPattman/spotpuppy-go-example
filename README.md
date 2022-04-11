@@ -1,14 +1,14 @@
 # Example Usage of `spotpuppy-go`
-> This is an example usage of the [spotpuppy-go](github.com/JoshPattman/spotpuppy-go) module
+> This is an example usage of the [spotpuppy-go](https://github.com/JoshPattman/spotpuppy-go) module
 ## Robot Hardware
 * RPi4 running headless raspberry pi os
-* Arduino nano connected over usb cable to RPi, running the `simple` branch of [this](github.com/JoshPattman/arduino-mpu6050) sketch
+* Arduino nano connected over usb cable to RPi, running the `simple` branch of [this](https://github.com/JoshPattman/arduino-mpu6050) sketch
 	* Soldered onto this is an `MPU6050` dmp. Instructions can be found in the sketch.
 * `pca9685` servo control hat for RPi
 * 12 `MG90D` servos plugged into the servo control hat
 * Amazon 12V-5V voltage regulator
 * 3S LiPo battery
-* 3D printed robot ([repo](github.com/JoshPattman/spotpuppy-models))
+* 3D printed robot ([repo](https://github.com/JoshPattman/spotpuppy-models))
 ## Files
 ### `config.json`
 This contains the configuration for the robot, such as joint offsets and which ports each servo is plugged into. You will probably have to modify this for your robot.
