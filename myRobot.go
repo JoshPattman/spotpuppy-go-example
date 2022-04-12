@@ -37,6 +37,7 @@ func NewRobot() *MyRobot {
 			StepHeight: 2,
 	        BodyHeight: q.Legs[sp.LegFrontLeft].GetRestingPosition().Y,
 	        StepFrequency: 1,
+			LeanMultiplier: 2/45,
 		},
 		State: &StateInfo{State:StateStill},
 	}
@@ -54,6 +55,7 @@ func NewDummyRobot() *MyRobot {
 			StepHeight: 2,
 	        BodyHeight: q.Legs[sp.LegFrontLeft].GetRestingPosition().Y,
 	        StepFrequency: 1,
+			LeanMultiplier: 2/45,
 		},
 		State: &StateInfo{State:StateStill},
 	}
@@ -81,6 +83,10 @@ func (r *MyRobot) Update() {
 		stepDir := sp.DirForward.Mul(r.Mov.VelocityFwd/r.Gait.StepFrequency).Add(sp.DirLeft.Mul(r.Mov.VelocityLft/r.Gait.StepFrequency))
 		stepMvA := stepDir.Mul(stepXOffsetA)
 		stepMvB := stepDir.Mul(stepXOffsetB)
+		// lean is the horizontal offset for legs in response to the robot tilting
+		// positive roll and pitch are when the robot is lower at the front left shoulder
+		leanFwd := sp.DirForward.Mul(pitch*r.Gait.LeanMultiplier)
+		leanLft := sp.DirLeft.Mul(roll*r.Gait.LeanMultiplier)
 		// StraightDown is the vector that goes straight down from the robots cg to the floor
 		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).In(r.Global)
 		for _, l := range sp.AllLegs {
@@ -94,7 +100,7 @@ func (r *MyRobot) Update() {
 				step = stepYB.Add(stepMvB)
 			}
 			// Add everything together
-			r.Quad.SetLegPosition(l, floorPos.Add(step))
+			r.Quad.SetLegPosition(l, floorPos.Add(step).Add(leanFwd).Add(leanLft))
 		}
 	} else if r.State.State == StateStanding && !hasFallen{
 		// Stand but keep feet on the ground
@@ -129,6 +135,7 @@ type GaitInfo struct{
     StepHeight float64 `json:"step_height"`
     BodyHeight float64 `json:"body_height"`
     StepFrequency float64 `json:"step_frequency"`
+	LeanMultiplier float64 `json:"lean_multiplier"`
 }
 type StateInfo struct{
     State string `json:"state"`
