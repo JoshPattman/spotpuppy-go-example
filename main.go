@@ -7,9 +7,9 @@ import (
 
 func main() {
 	var r *MyRobot
-	if (runtime.GOARCH == "amd64"){
+	if runtime.GOARCH == "amd64" {
 		r = NewDummyRobot()
-	} else{
+	} else {
 		r = NewRobot()
 	}
 	r.Quad.LoadFromFile("config.json")
@@ -18,7 +18,7 @@ func main() {
 	startControlApi(r)
 }
 
-func updateRobotForever(r *MyRobot){
+func updateRobotForever(r *MyRobot) {
 	ups := spotpuppy.NewUPSTimer(100)
 	for true {
 		r.Update()
