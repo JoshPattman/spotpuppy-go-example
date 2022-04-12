@@ -95,9 +95,9 @@ func (r *MyRobot) Update() {
 			// Find the step offset for this moment in time
 			var step *sp.Vector3
 			if l == sp.LegFrontLeft || l == sp.LegBackRight {
-				step = stepYA.Add(stepMvA)
+				step = stepYA.Add(stepMvA).In(r.Global)
 			} else {
-				step = stepYB.Add(stepMvB)
+				step = stepYB.Add(stepMvB).In(r.Global)
 			}
 			// Add everything together
 			r.Quad.SetLegPosition(l, floorPos.Add(step).Add(leanFwd).Add(leanLft))
