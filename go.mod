@@ -1,6 +1,6 @@
 module spotpuppy-proto
 
-require github.com/JoshPattman/spotpuppy-go v0.0.4
+require github.com/JoshPattman/spotpuppy-go v0.0.5
 
 require (
 	github.com/googolgl/go-i2c v0.1.1 // indirect
@@ -10,5 +10,7 @@ require (
 	github.com/westphae/quaternion v0.0.0-20210908005042-fa06d546065c // indirect
 	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744 // indirect
 )
+
+//replace github.com/JoshPattman/spotpuppy-go => ../spotpuppy-go
 
 go 1.18

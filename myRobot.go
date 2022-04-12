@@ -9,7 +9,7 @@ import (
 type MyRobot struct {
 	Quad   *sp.Quadruped
 	Sensor sp.RotationSensor
-	CS     *sp.RollPitchCoordinateSystem
+	Global     *sp.RollPitchCoordinateSystem
 	T      float64
 	LT     time.Time
 	Mov *MovementInfo
@@ -29,7 +29,7 @@ func NewRobot() *MyRobot {
 	return &MyRobot{
 		Quad:   q,
 		Sensor: sp.NewArduinoRotationSensor("/dev/ttyUSB0"),
-		CS:     sp.NewRollPitchCoordinateSystem(),
+		Global:     sp.NewRollPitchCoordinateSystem(),
 		T:      0,
 		LT:     time.Now(),
 		Mov: &MovementInfo{},
@@ -46,7 +46,7 @@ func NewDummyRobot() *MyRobot {
 	return &MyRobot{
 		Quad:   q,
 		Sensor: sp.NewDummyRotationSensor(),
-		CS:     sp.NewRollPitchCoordinateSystem(),
+		Global:     sp.NewRollPitchCoordinateSystem(),
 		T:      0,
 		LT:     time.Now(),
 		Mov: &MovementInfo{},
@@ -67,32 +67,40 @@ func (r *MyRobot) Update() {
 	clkB := math.Mod(r.T+0.5, 1.0)
 	// Update rotation sensor
 	roll, pitch := r.Sensor.GetRollPitch()
-	r.CS.SetRollPitch(roll, pitch)
+	r.Global.SetRollPitch(roll, pitch)
 	hasFallen := math.Abs(roll) < 30 && math.Abs(pitch) < 30
 	if r.State.State == StateTrot && !hasFallen{
 		// Custom walking code
-		snA := math.Sin(clkA * 3.1415 * 2)
-		snB := math.Sin(clkB * 3.1415 * 2)
-		snA = math.Min(snA, 0)
-		snB = math.Min(snB, 0)
-		stepA := r.CS.TD(sp.DirUp.Mul(snA).Mul(r.Gait.StepHeight))
-		stepB := r.CS.TD(sp.DirUp.Mul(snB).Mul(r.Gait.StepHeight))
-		straightDown := r.CS.TD(sp.DirDown.Mul(r.Gait.BodyHeight))
+		// Walking offsets and the horizontal/vertical functions that move the foot throught the step
+		stepXOffsetA, stepYOffsetA := getWalkingOffsets(clkA, 1)
+		stepXOffsetB, stepYOffsetB := getWalkingOffsets(clkB, 1)
+		// stepY is the vertical component of a foots movement
+		stepYA := sp.DirUp.Mul(stepYOffsetA).Mul(r.Gait.StepHeight).In(r.Global)
+		stepYB := sp.DirUp.Mul(stepYOffsetB).Mul(r.Gait.StepHeight).In(r.Global)
+		// stepMv is the horizontal component of a foots movement
+		stepDir := sp.DirForward.Mul(r.Mov.VelocityFwd/r.Gait.StepFrequency).Add(sp.DirLeft.Mul(r.Mov.VelocityLft/r.Gait.StepFrequency))
+		stepMvA := stepDir.Mul(stepXOffsetA)
+		stepMvB := stepDir.Mul(stepXOffsetB)
+		// StraightDown is the vector that goes straight down from the robots cg to the floor
+		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).In(r.Global)
 		for _, l := range sp.AllLegs {
-			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.CS.TD(r.Quad.ShoulderVec(l).Inv()))
+			// Find the position of the foot on a flat floor
+			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().In(r.Global))
+			// Find the step offset for this moment in time
 			var step *sp.Vector3
 			if l == sp.LegFrontLeft || l == sp.LegBackRight {
-				step = stepA
+				step = stepYA.Add(stepMvA)
 			} else {
-				step = stepB
+				step = stepYB.Add(stepMvB)
 			}
+			// Add everything together
 			r.Quad.SetLegPosition(l, floorPos.Add(step))
 		}
 	} else if r.State.State == StateStanding && !hasFallen{
 		// Stand but keep feet on the ground
-		straightDown := r.CS.TD(sp.DirDown.Mul(r.Gait.BodyHeight))
+		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).In(r.Global)
 		for _, l := range sp.AllLegs {
-			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.CS.TD(r.Quad.ShoulderVec(l).Inv()))
+			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().In(r.Global))
 			r.Quad.SetLegPosition(l, floorPos)
 		}
 	} else if !hasFallen{
@@ -124,4 +132,24 @@ type GaitInfo struct{
 }
 type StateInfo struct{
     State string `json:"state"`
+}
+
+// This can be visualised with thi graph i made: https://www.desmos.com/calculator/qa4qzd2wy3
+func getWalkingOffsets(t float64, ratio float64) (float64, float64){
+	if ratio > 1{
+		ratio = 1
+	} else if ratio < 0{
+		ratio = 0
+	}
+	y := 0.0
+	x := 0.0
+	m := 2.0/(ratio-2)
+	if t > 0.5*ratio{
+		y = 0
+		x = (m*t)-m
+	} else{
+		y = math.Sin(t*3.14159*2/ratio)
+		x = 2*t/ratio
+	}
+	return x, y
 }
