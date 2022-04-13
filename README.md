@@ -10,8 +10,10 @@
 * 3S LiPo battery
 * 3D printed robot ([repo](https://github.com/JoshPattman/spotpuppy-models))
 ## Files
-### `config.json`
+### `conf.json`
 This contains the configuration for the robot, such as joint offsets and which ports each servo is plugged into. You will probably have to modify this for your robot.
+### `conf_gait.json`
+This contains the gait config, such as step height and step speed
 ### `myRobot.go`
 This contains the walking algorithm and actual usage of the `spotpuppy-go` module. It also contains all of the code for making the robot stand and balance.
 ### `main.go`
