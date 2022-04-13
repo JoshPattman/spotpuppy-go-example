@@ -11,15 +11,17 @@ func handleResponse[T InfoUpdate](res T) func(w http.ResponseWriter, r *http.Req
 		switch r.Method {
 		case "GET":
 			js, _ := json.Marshal(res)
-			fmt.Fprintf(w, string(js)+"\n")
+			fmt.Fprintf(w, string(js))
 		case "POST":
 			decoder := json.NewDecoder(r.Body)
 			err := decoder.Decode(res)
 			if err != nil {
 				fmt.Println("Error parsing JSON for")
 				fmt.Println(err)
+				fmt.Fprintf(w, "ERROR: Error parsing json")
 			} else {
 				res.OnInfoChanged()
+				fmt.Fprintf(w, "OK")
 			}
 		}
 	}
