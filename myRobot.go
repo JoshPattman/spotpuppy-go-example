@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	sp "github.com/JoshPattman/spotpuppy-go"
+	"io/ioutil"
 	"math"
 	"time"
 )
@@ -58,6 +60,17 @@ func NewDummyRobot() *MyRobot {
 		},
 		State: &StateInfo{State: StateStill},
 	}
+}
+func (r *MyRobot) Load(name string) {
+	r.Quad.LoadFromFile(name + ".json")
+	file, _ := ioutil.ReadFile(name + "_gait.json")
+	_ = json.Unmarshal(file, r.Gait)
+
+}
+func (r *MyRobot) Save(name string) {
+	r.Quad.SaveToFile(name + ".json")
+	file, _ := json.MarshalIndent(r.Gait, "", " ")
+	_ = ioutil.WriteFile(name+"_gait.json", file, 0644)
 }
 
 func (r *MyRobot) Update() {

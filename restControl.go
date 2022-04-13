@@ -29,6 +29,14 @@ func quit(w http.ResponseWriter, r *http.Request) {
 	os.Exit(0)
 }
 
+func reload(w http.ResponseWriter, r *http.Request) {
+	robotRef.Load("conf")
+}
+
+func save(w http.ResponseWriter, r *http.Request) {
+	robotRef.Save("conf")
+}
+
 type InfoUpdate interface {
 	OnInfoChanged()
 }
@@ -54,12 +62,16 @@ var (
 		StepFrequency: 1,
 	}
 )
+var robotRef *MyRobot
 
 func startControlApi(r *MyRobot) {
+	robotRef = r
 	http.HandleFunc("/move", handleResponse(r.Mov))
 	http.HandleFunc("/state", handleResponse(r.State))
 	http.HandleFunc("/gait", handleResponse(r.Gait))
 	http.HandleFunc("/quit", quit)
+	http.HandleFunc("/reload", reload)
+	http.HandleFunc("/save", save)
 	//fmt.Println("Starting server...")
 	panic(http.ListenAndServe(":10000", nil))
 }

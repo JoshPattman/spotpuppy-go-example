@@ -12,8 +12,8 @@ func main() {
 	} else {
 		r = NewRobot()
 	}
-	r.Quad.LoadFromFile("config.json")
-	r.Quad.SaveToFile("config.json")
+	r.Load("conf")
+	r.Save("conf")
 	go updateRobotForever(r)
 	startControlApi(r)
 }
