@@ -11,7 +11,7 @@ import (
 type MyRobot struct {
 	Quad   *sp.Quadruped
 	Sensor sp.RotationSensor
-	Global *sp.RollPitchCoordinateSystem
+	Global sp.Quat
 	T      float64
 	LT     time.Time
 	Mov    *MovementInfo
@@ -30,7 +30,7 @@ func NewRobot() *MyRobot {
 	return &MyRobot{
 		Quad:   q,
 		Sensor: sp.NewArduinoRotationSensor("/dev/ttyUSB0"),
-		Global: sp.NewRollPitchCoordinateSystem(),
+		Global: sp.NewQuatRollPitch(0, 0),
 		T:      0,
 		LT:     time.Now(),
 		Mov:    &MovementInfo{},
@@ -48,7 +48,7 @@ func NewDummyRobot() *MyRobot {
 	return &MyRobot{
 		Quad:   q,
 		Sensor: sp.NewDummyRotationSensor(),
-		Global: sp.NewRollPitchCoordinateSystem(),
+		Global: sp.NewQuatRollPitch(0, 0),
 		T:      0,
 		LT:     time.Now(),
 		Mov:    &MovementInfo{},
@@ -81,7 +81,7 @@ func (r *MyRobot) Update() {
 	clkB := math.Mod(r.T+0.5, 1.0)
 	// Update rotation sensor
 	roll, pitch := r.Sensor.GetRollPitch()
-	r.Global.SetRollPitch(roll, pitch)
+	r.Global = sp.NewQuatRollPitch(roll, pitch)
 	hasFallen := !(math.Abs(roll) < 30 && math.Abs(pitch) < 30)
 	if r.State.State == StateTrot && !hasFallen {
 		// Custom walking code
@@ -105,7 +105,7 @@ func (r *MyRobot) Update() {
 			// Find the position of the foot on a flat floor
 			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().In(r.Global))
 			// Find the step offset for this moment in time
-			var step *sp.Vector3
+			var step *sp.Vec3
 			if l == sp.LegFrontLeft || l == sp.LegBackRight {
 				step = stepYA.Add(stepMvA).In(r.Global)
 			} else {

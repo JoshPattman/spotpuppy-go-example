@@ -1,11 +1,17 @@
 package main
 
 import (
-	"github.com/JoshPattman/spotpuppy-go"
+	"fmt"
 	"runtime"
+
+	"github.com/JoshPattman/spotpuppy-go"
 )
 
-func main() {
+func PrintVec(v *spotpuppy.Vec3) {
+	fmt.Println("(", v.X, ",", v.Z, ",", v.Y, ")")
+}
+
+func main2() {
 	var r *MyRobot
 	if runtime.GOARCH == "amd64" {
 		r = NewDummyRobot()

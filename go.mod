@@ -11,6 +11,6 @@ require (
 	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744 // indirect
 )
 
-//replace github.com/JoshPattman/spotpuppy-go => ../spotpuppy-go
+replace github.com/JoshPattman/spotpuppy-go => ../spotpuppy-go
 
 go 1.18
