@@ -13,12 +13,13 @@ func PrintVec(v *spotpuppy.Vec3) {
 
 func main() {
 	a := spotpuppy.NewQuatAngleAxis(spotpuppy.DirLeft, 45)
-	b := a.RotateByGlobal(spotpuppy.NewQuatAngleAxis(spotpuppy.DirUp, 90))
-	fmt.Println(a.Rotate(spotpuppy.DirForward))
-	fmt.Println(b.Rotate(spotpuppy.DirForward))
-	_, y, _ := b.Euler()
-	c := spotpuppy.NewQuatAngleAxis(spotpuppy.DirUp, y*180.0/3.14)
-	fmt.Println(b.RotateByLocal(c).Rotate(spotpuppy.DirForward))
+	b := spotpuppy.NewQuatAngleAxis(spotpuppy.DirForward, 30)
+	c := spotpuppy.NewQuatAngleAxis(spotpuppy.DirUp, 45)
+	ab := a.RotateByLocal(b)
+	abc := ab.RotateByGlobal(c)
+	fmt.Println(ab.Apply(spotpuppy.DirForward))
+	fmt.Println(abc.Apply(spotpuppy.DirForward))
+	fmt.Println(abc.NoYaw().Apply(spotpuppy.DirForward))
 }
 
 func main2() {
