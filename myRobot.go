@@ -2,16 +2,16 @@ package main
 
 import (
 	"encoding/json"
-	sp "github.com/JoshPattman/spotpuppy-go"
 	"io/ioutil"
 	"math"
 	"time"
+
+	sp "github.com/JoshPattman/spotpuppy-go"
 )
 
 type MyRobot struct {
 	Quad   *sp.Quadruped
 	Sensor sp.RotationSensor
-	Global sp.Quat
 	T      float64
 	LT     time.Time
 	Mov    *MovementInfo
@@ -30,7 +30,6 @@ func NewRobot() *MyRobot {
 	return &MyRobot{
 		Quad:   q,
 		Sensor: sp.NewArduinoRotationSensor("/dev/ttyUSB0"),
-		Global: sp.NewQuatRollPitch(0, 0),
 		T:      0,
 		LT:     time.Now(),
 		Mov:    &MovementInfo{},
@@ -48,7 +47,6 @@ func NewDummyRobot() *MyRobot {
 	return &MyRobot{
 		Quad:   q,
 		Sensor: sp.NewDummyRotationSensor(),
-		Global: sp.NewQuatRollPitch(0, 0),
 		T:      0,
 		LT:     time.Now(),
 		Mov:    &MovementInfo{},
@@ -80,45 +78,44 @@ func (r *MyRobot) Update() {
 	clkA := math.Mod(r.T, 1.0)
 	clkB := math.Mod(r.T+0.5, 1.0)
 	// Update rotation sensor
-	roll, pitch := r.Sensor.GetRollPitch()
-	r.Global = sp.NewQuatRollPitch(roll, pitch)
-	hasFallen := !(math.Abs(roll) < 30 && math.Abs(pitch) < 30)
+	bodyRotation := r.Sensor.GetQuaternion()
+	hasFallen := false //!(math.Abs(roll) < 30 && math.Abs(pitch) < 30)
 	if r.State.State == StateTrot && !hasFallen {
 		// Custom walking code
 		// Walking offsets and the horizontal/vertical functions that move the foot throught the step
 		stepXOffsetA, stepYOffsetA := getWalkingOffsets(clkA, 1)
 		stepXOffsetB, stepYOffsetB := getWalkingOffsets(clkB, 1)
 		// stepY is the vertical component of a foots movement
-		stepYA := sp.DirUp.Mul(stepYOffsetA).Mul(r.Gait.StepHeight).In(r.Global)
-		stepYB := sp.DirUp.Mul(stepYOffsetB).Mul(r.Gait.StepHeight).In(r.Global)
+		stepYA := sp.DirUp.Mul(stepYOffsetA).Mul(r.Gait.StepHeight).In(bodyRotation)
+		stepYB := sp.DirUp.Mul(stepYOffsetB).Mul(r.Gait.StepHeight).In(bodyRotation)
 		// stepMv is the horizontal component of a foots movement
 		stepDir := sp.DirForward.Mul(r.Mov.VelocityFwd / r.Gait.StepFrequency).Add(sp.DirLeft.Mul(r.Mov.VelocityLft / r.Gait.StepFrequency))
 		stepMvA := stepDir.Mul(stepXOffsetA)
 		stepMvB := stepDir.Mul(stepXOffsetB)
 		// lean is the horizontal offset for legs in response to the robot tilting
 		// positive roll and pitch are when the robot is lower at the front left shoulder
-		leanFwd := sp.DirForward.Mul(pitch * r.Gait.LeanMultiplier)
-		leanLft := sp.DirLeft.Mul(roll * r.Gait.LeanMultiplier)
+		leanFwd := sp.DirForward //.Mul(pitch * r.Gait.LeanMultiplier)
+		leanLft := sp.DirLeft    //.Mul(roll * r.Gait.LeanMultiplier)
 		// StraightDown is the vector that goes straight down from the robots cg to the floor
-		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).In(r.Global)
+		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).In(bodyRotation)
 		for _, l := range sp.AllLegs {
 			// Find the position of the foot on a flat floor
-			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().In(r.Global))
+			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().In(bodyRotation))
 			// Find the step offset for this moment in time
-			var step *sp.Vec3
+			var step sp.Vec3
 			if l == sp.LegFrontLeft || l == sp.LegBackRight {
-				step = stepYA.Add(stepMvA).In(r.Global)
+				step = stepYA.Add(stepMvA).In(bodyRotation)
 			} else {
-				step = stepYB.Add(stepMvB).In(r.Global)
+				step = stepYB.Add(stepMvB).In(bodyRotation)
 			}
 			// Add everything together
 			r.Quad.SetLegPosition(l, floorPos.Add(step).Add(leanFwd).Add(leanLft))
 		}
 	} else if r.State.State == StateStanding && !hasFallen {
 		// Stand but keep feet on the ground
-		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).In(r.Global)
+		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).In(bodyRotation)
 		for _, l := range sp.AllLegs {
-			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().In(r.Global))
+			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().In(bodyRotation))
 			r.Quad.SetLegPosition(l, floorPos)
 		}
 	} else if !hasFallen {
