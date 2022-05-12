@@ -42,7 +42,7 @@
 		}
 	},
 	"motor_controller": {
-		"Mapping": {
+		"mapping": {
 			"back_left.hip_x": -1,
 			"back_left.hip_z": -1,
 			"back_left.knee": -1,

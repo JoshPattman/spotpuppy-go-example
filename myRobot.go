@@ -77,45 +77,45 @@ func (r *MyRobot) Update() {
 	r.LT = time.Now()
 	clkA := math.Mod(r.T, 1.0)
 	clkB := math.Mod(r.T+0.5, 1.0)
-	// Update rotation sensor
-	bodyRotation := r.Sensor.GetQuaternion()
-	hasFallen := false //!(math.Abs(roll) < 30 && math.Abs(pitch) < 30)
+	// Update rotation sensor. In this model we do not care about the robots yaw so we remove that
+	bodyRotation := r.Sensor.GetQuaternion().NoYaw()
+	hasFallen := sp.DirUp.AngleTo(sp.DirUp.Rotated(bodyRotation)) > 30
 	if r.State.State == StateTrot && !hasFallen {
 		// Custom walking code
 		// Walking offsets and the horizontal/vertical functions that move the foot throught the step
 		stepXOffsetA, stepYOffsetA := getWalkingOffsets(clkA, 1)
 		stepXOffsetB, stepYOffsetB := getWalkingOffsets(clkB, 1)
 		// stepY is the vertical component of a foots movement
-		stepYA := sp.DirUp.Mul(stepYOffsetA).Mul(r.Gait.StepHeight).In(bodyRotation)
-		stepYB := sp.DirUp.Mul(stepYOffsetB).Mul(r.Gait.StepHeight).In(bodyRotation)
+		stepYA := sp.DirUp.Mul(stepYOffsetA).Mul(r.Gait.StepHeight).Rotated(bodyRotation)
+		stepYB := sp.DirUp.Mul(stepYOffsetB).Mul(r.Gait.StepHeight).Rotated(bodyRotation)
 		// stepMv is the horizontal component of a foots movement
 		stepDir := sp.DirForward.Mul(r.Mov.VelocityFwd / r.Gait.StepFrequency).Add(sp.DirLeft.Mul(r.Mov.VelocityLft / r.Gait.StepFrequency))
 		stepMvA := stepDir.Mul(stepXOffsetA)
 		stepMvB := stepDir.Mul(stepXOffsetB)
 		// lean is the horizontal offset for legs in response to the robot tilting
-		// positive roll and pitch are when the robot is lower at the front left shoulder
-		leanFwd := sp.DirForward //.Mul(pitch * r.Gait.LeanMultiplier)
-		leanLft := sp.DirLeft    //.Mul(roll * r.Gait.LeanMultiplier)
+		cgOffset := sp.DirUp.Rotated(bodyRotation).Sub(sp.DirUp)
+		leanFwd := sp.DirForward.Mul(cgOffset.X * r.Gait.LeanMultiplier)
+		leanLft := sp.DirLeft.Mul(cgOffset.Z * r.Gait.LeanMultiplier)
 		// StraightDown is the vector that goes straight down from the robots cg to the floor
-		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).In(bodyRotation)
+		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).Rotated(bodyRotation)
 		for _, l := range sp.AllLegs {
 			// Find the position of the foot on a flat floor
-			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().In(bodyRotation))
+			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().Rotated(bodyRotation))
 			// Find the step offset for this moment in time
 			var step sp.Vec3
 			if l == sp.LegFrontLeft || l == sp.LegBackRight {
-				step = stepYA.Add(stepMvA).In(bodyRotation)
+				step = stepYA.Add(stepMvA).Rotated(bodyRotation)
 			} else {
-				step = stepYB.Add(stepMvB).In(bodyRotation)
+				step = stepYB.Add(stepMvB).Rotated(bodyRotation)
 			}
 			// Add everything together
 			r.Quad.SetLegPosition(l, floorPos.Add(step).Add(leanFwd).Add(leanLft))
 		}
 	} else if r.State.State == StateStanding && !hasFallen {
 		// Stand but keep feet on the ground
-		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).In(bodyRotation)
+		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).Rotated(bodyRotation)
 		for _, l := range sp.AllLegs {
-			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().In(bodyRotation))
+			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().Rotated(bodyRotation))
 			r.Quad.SetLegPosition(l, floorPos)
 		}
 	} else if !hasFallen {
