@@ -15,6 +15,7 @@ func main() {
 	}
 	r.Load("conf")
 	r.Save("conf")
+	r.State.State = StateStanding
 	go updateRobotForever(r)
 	startControlApi(r)
 }

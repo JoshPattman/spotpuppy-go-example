@@ -104,7 +104,8 @@ func (r *MyRobot) Update() {
 		// Stand but keep feet on the ground
 		straightDown := sp.DirDown.Mul(r.Gait.BodyHeight).Rotated(bodyRotation)
 		for _, l := range sp.AllLegs {
-			floorPos := r.Quad.ShoulderVec(l).Add(straightDown).Add(r.Quad.ShoulderVec(l).Inv().Rotated(bodyRotation))
+			shoulderVec := r.Quad.ShoulderVec(l)
+			floorPos := shoulderVec.Add(straightDown).Add(shoulderVec.Inv().Rotated(bodyRotation))
 			r.Quad.SetLegPosition(l, floorPos)
 		}
 	} else if !hasFallen {
