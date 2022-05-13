@@ -25,11 +25,11 @@ const (
 	StateTrot     = "trotting"
 )
 
-func NewRobot() *MyRobot {
-	q := sp.NewQuadrupedWithExtraMotors(sp.NewDirectMotorIKGenerator(), sp.NewPCAMotorController(), []string{"neck"})
+func NewRobotWith(mc sp.MotorController, rs sp.RotationSensor) *MyRobot {
+	q := sp.NewQuadrupedWithExtraMotors(sp.NewDirectMotorIKGenerator(), mc, []string{"neck"})
 	return &MyRobot{
 		Quad:   q,
-		Sensor: sp.NewArduinoRotationSensor("/dev/ttyUSB0"),
+		Sensor: rs,
 		T:      0,
 		LT:     time.Now(),
 		Mov:    &MovementInfo{},
@@ -37,27 +37,16 @@ func NewRobot() *MyRobot {
 			StepHeight:     2,
 			BodyHeight:     q.Legs[sp.LegFrontLeft].GetRestingPosition().Y,
 			StepFrequency:  1,
-			LeanMultiplier: 2 / 45,
+			LeanMultiplier: 2.0 / 45.0,
 		},
 		State: &StateInfo{State: StateStill},
 	}
 }
+func NewRobot() *MyRobot {
+	return NewRobotWith(sp.NewPCAMotorController(), sp.NewArduinoRotationSensor("/dev/ttyUSB0", sp.AxesRemap{X: "x", Y: "y", Z: "z"}))
+}
 func NewDummyRobot() *MyRobot {
-	q := sp.NewQuadrupedWithExtraMotors(sp.NewDirectMotorIKGenerator(), sp.NewDummyMotorController(), []string{"neck"})
-	return &MyRobot{
-		Quad:   q,
-		Sensor: sp.NewDummyRotationSensor(),
-		T:      0,
-		LT:     time.Now(),
-		Mov:    &MovementInfo{},
-		Gait: &GaitInfo{
-			StepHeight:     2,
-			BodyHeight:     q.Legs[sp.LegFrontLeft].GetRestingPosition().Y,
-			StepFrequency:  1,
-			LeanMultiplier: 2 / 45,
-		},
-		State: &StateInfo{State: StateStill},
-	}
+	return NewRobotWith(sp.NewDummyMotorController(), sp.NewDummyRotationSensor())
 }
 func (r *MyRobot) Load(name string) {
 	r.Quad.LoadFromFile(name + ".json")

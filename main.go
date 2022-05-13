@@ -3,7 +3,7 @@ package main
 import (
 	"runtime"
 
-	"github.com/JoshPattman/spotpuppy-go"
+	sp "github.com/JoshPattman/spotpuppy-go"
 )
 
 func main() {
@@ -20,8 +20,8 @@ func main() {
 }
 
 func updateRobotForever(r *MyRobot) {
-	ups := spotpuppy.NewUPSTimer(100)
-	for true {
+	ups := sp.NewUPSTimer(100)
+	for {
 		r.Update()
 		ups.WaitForNext()
 	}
