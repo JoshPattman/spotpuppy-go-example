@@ -35,20 +35,25 @@ func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSens
 	}
 }
 
-// For now, this makes no attempt to right itself, instead will just slowly fall over
 func (r *Robot) Update() {
 	// Timekeeping
 	r.t += time.Since(r.lastUpdate).Seconds() * r.StepFrequency
 	r.lastUpdate = time.Now()
+
+	// Rotation
+	bodyRotation := r.RotationSensor.GetQuaternion().NoYaw()
+	//hasFallen := sp.DirUp.AngleTo(sp.DirUp.Rotated(bodyRotation)) > 30
+	r.updateTrot(bodyRotation)
+}
+
+// For now, this makes no attempt to right itself, instead will just slowly fall over
+func (r *Robot) updateTrot(bodyRotation sp.Quat) {
+	// Clocks
 	clkA := math.Mod(r.t, 1.0)
 	clkB := math.Mod(r.t+0.5, 1.0)
 	clks := make(map[string]float64)
 	clks[sp.LegFrontLeft], clks[sp.LegBackRight] = clkA, clkA
 	clks[sp.LegFrontRight], clks[sp.LegBackLeft] = clkB, clkB
-
-	// Rotation
-	bodyRotation := r.RotationSensor.GetQuaternion().NoYaw()
-	//hasFallen := sp.DirUp.AngleTo(sp.DirUp.Rotated(bodyRotation)) > 30
 
 	// Dynamic params
 	stepLengthsFwd, stepLengthsLft := make(map[string]float64), make(map[string]float64)
