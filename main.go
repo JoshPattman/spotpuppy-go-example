@@ -1,26 +1,27 @@
 package main
 
 import (
+	"os"
 	"runtime"
 
 	sp "github.com/JoshPattman/spotpuppy-go"
 )
 
 func main() {
-	var r *MyRobot
+	var r *Robot
 	if runtime.GOARCH == "amd64" {
-		r = NewDummyRobot()
+		r = NewRobot(sp.NewDummyMotorController(), sp.NewDummyRotationSensor())
 	} else {
-		r = NewRobot()
+		r = NewRobot(
+			sp.NewPCAMotorController(),
+			sp.NewArduinoRotationSensor("/dev/ttyUSB0", sp.AxesRemap{X: "x", Y: "y", Z: "z"}),
+		)
 	}
-	r.Load("conf")
-	r.Save("conf")
-	r.State.State = StateStanding
-	go updateRobotForever(r)
-	startControlApi(r)
-}
+	if _, err := os.Stat("quad.json"); err != nil {
+		r.Quadruped.SaveToFile("quad.json")
+	}
+	r.Quadruped.LoadFromFile("quad.json")
 
-func updateRobotForever(r *MyRobot) {
 	ups := sp.NewUPSTimer(100)
 	for {
 		r.Update()
