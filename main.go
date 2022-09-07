@@ -12,9 +12,12 @@ import (
 
 var mode string
 
+var configFile string
+
 func main() {
 	// Parse cli
 	flag.StringVar(&mode, "m", "stand", "the operation for the robot to do (one of: 'trot-in-place', 'trot-forwards', 'stand', 'stand-tall', 'stand-front-left', 'balance', 'trot-js')")
+	flag.StringVar(&configFile, "f", "quad.json", "the filename of the robot config")
 	flag.Parse()
 
 	// create robot with appropriate peripherals
@@ -63,12 +66,12 @@ func main() {
 
 	// load the quadruped settings from file
 	fmt.Println("Loading config from disk")
-	if _, err := os.Stat("quad.json"); err != nil {
-		if err = r.Quadruped.SaveToFile("quad.json"); err != nil {
+	if _, err := os.Stat(configFile); err != nil {
+		if err = r.Quadruped.SaveToFile(configFile); err != nil {
 			panic(err)
 		}
 	}
-	if err := r.Quadruped.LoadFromFile("quad.json"); err != nil {
+	if err := r.Quadruped.LoadFromFile(configFile); err != nil {
 		panic(err)
 	}
 
