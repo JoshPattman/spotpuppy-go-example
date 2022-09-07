@@ -29,6 +29,7 @@ type Robot struct {
 	BodyHeight           float64
 	Mode                 RobotMode
 	PushPIFwd, PushPILft *PIController
+	VelFwd, VelLft       float64
 }
 
 func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSensor) *Robot {
@@ -110,6 +111,11 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 		pushForces[sp.LegFrontRight] = pushFwd - pushLft
 		pushForces[sp.LegBackLeft] = -pushFwd + pushLft
 		pushForces[sp.LegBackRight] = -pushFwd - pushLft
+
+		for _, l := range sp.AllLegs {
+			stepLengthsFwd[l] = r.VelFwd / r.StepFrequency
+			stepLengthsLft[l] = r.VelLft / r.StepFrequency
+		}
 	}
 
 	// Convert to gait

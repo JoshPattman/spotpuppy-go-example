@@ -35,7 +35,8 @@ func main() {
 	case "trot-in-place":
 		r.Mode = ModeTrot
 	case "trot-forwards":
-		panic("Mode not implemented")
+		r.Mode = ModeTrot
+		r.VelFwd = 3
 	case "stand":
 		r.Mode = ModeStand
 	case "stand-tall":
