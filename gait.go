@@ -37,11 +37,11 @@ func xyBezierTransformed(xs []float64, xStart, xEnd, t float64) float64 {
 
 type GaitParameters struct {
 	// Value between 0 and 1 (usuall 0.4 works) that determines how much x movement happens after the foot has stopped contacting the ground
-	ExtendHorizontal float64
+	ExtendHorizontal float64 `json:"horizontal-extension"`
 	// Value in units (cm) that says how high the tallest point in the step is
-	StepHeight float64
+	StepHeight float64 `json:"step-height"`
 	// Value between 0 and 1 where 0 means the leg spends 100 percent of the time on the floor and 1 means 100 percent of the time in the air (usually 0.25-0.5)
-	Airtime float64
+	Airtime float64 `json:"airtime"`
 }
 
 // t MUST be between 0 and 1

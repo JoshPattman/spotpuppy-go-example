@@ -1,0 +1,17 @@
+{
+	"gait-gen-params": {
+		"horizontal-extension": 0.4,
+		"step-height": 3,
+		"airtime": 0.33
+	},
+	"step-freq": 2,
+	"body-height": 8,
+	"push-force-pi-fwd": {
+		"kp": 1,
+		"ki": 0
+	},
+	"push-force-pi-lft": {
+		"kp": 1,
+		"ki": 0
+	}
+}

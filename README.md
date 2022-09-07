@@ -9,9 +9,9 @@
 * Amazon 12V-5V voltage regulator
 * 3S LiPo battery
 * 3D printed robot ([repo](https://github.com/JoshPattman/spotpuppy-models))
-## Files
-### `quad.json`
-This contains the configuration for the robot, such as joint offsets and which ports each servo is plugged into. You will probably have to modify this for your robot.
+## Files/Folders
+### `conf-dummy`
+This contains the configuration for the robot, such as joint offsets, which ports each servo is plugged into, and tuning values for the gait. You will probably have to modify this for your robot.
 ### `robot.go`
 This contains the walking algorithm and actual usage of the `spotpuppy-go` module. It also contains all of the code for making the robot stand and balance.
 ### `main.go`

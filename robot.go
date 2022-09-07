@@ -19,17 +19,22 @@ const (
 	ModeTrot
 )
 
+type TrotParameters struct {
+	GaitParameters *GaitParameters `json:"gait-gen-params"`
+	StepFrequency  float64         `json:"step-freq"`
+	BodyHeight     float64         `json:"body-height"`
+	PushPIFwd      *PIController   `json:"push-force-pi-fwd"`
+	PushPILft      *PIController   `json:"push-force-pi-lft"`
+}
+
 type Robot struct {
-	Quadruped            *sp.Quadruped
-	RotationSensor       sp.RotationSensor
-	t                    float64
-	lastUpdate           time.Time
-	GaitParameters       *GaitParameters
-	StepFrequency        float64
-	BodyHeight           float64
-	Mode                 RobotMode
-	PushPIFwd, PushPILft *PIController
-	VelFwd, VelLft       float64
+	Quadruped      *sp.Quadruped
+	RotationSensor sp.RotationSensor
+	t              float64
+	lastUpdate     time.Time
+	TrotParameters *TrotParameters
+	Mode           RobotMode
+	VelFwd, VelLft float64
 }
 
 func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSensor) *Robot {
@@ -38,22 +43,18 @@ func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSens
 		Quadruped:      q,
 		RotationSensor: rotationSensor,
 		lastUpdate:     time.Now(),
-		GaitParameters: &GaitParameters{
-			Airtime:          0.33,
-			StepHeight:       2,
-			ExtendHorizontal: 0.4,
+		TrotParameters: &TrotParameters{
+			GaitParameters: &GaitParameters{},
+			PushPIFwd:      NewPIController(0, 0),
+			PushPILft:      NewPIController(0, 0),
 		},
-		StepFrequency: 2,
-		BodyHeight:    8,
-		Mode:          ModeStand,
-		PushPIFwd:     NewPIController(1, 0),
-		PushPILft:     NewPIController(1, 0),
+		Mode: ModeStand,
 	}
 }
 
 func (r *Robot) Update() {
 	// Timekeeping
-	r.t += time.Since(r.lastUpdate).Seconds() * r.StepFrequency
+	r.t += time.Since(r.lastUpdate).Seconds() * r.TrotParameters.StepFrequency
 	r.lastUpdate = time.Now()
 
 	// Rotation
@@ -100,11 +101,11 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 
 		// Calculate PID values from tilting forwards and left angles
 		// Positive means tilting forwards
-		r.PushPIFwd.Current = math.Asin(sp.DirForward.Dot(rotatedUp))
+		r.TrotParameters.PushPIFwd.Current = math.Asin(sp.DirForward.Dot(rotatedUp))
 		// Positive means tilting left
-		r.PushPILft.Current = math.Asin(sp.DirLeft.Dot(rotatedUp))
-		pushFwd := r.PushPIFwd.NextAdjustment()
-		pushLft := r.PushPILft.NextAdjustment()
+		r.TrotParameters.PushPILft.Current = math.Asin(sp.DirLeft.Dot(rotatedUp))
+		pushFwd := r.TrotParameters.PushPIFwd.NextAdjustment()
+		pushLft := r.TrotParameters.PushPILft.NextAdjustment()
 
 		// Set the push forces of each leg
 		pushForces[sp.LegFrontLeft] = pushFwd + pushLft
@@ -113,18 +114,18 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 		pushForces[sp.LegBackRight] = -pushFwd - pushLft
 
 		for _, l := range sp.AllLegs {
-			stepLengthsFwd[l] = r.VelFwd / r.StepFrequency
-			stepLengthsLft[l] = r.VelLft / r.StepFrequency
+			stepLengthsFwd[l] = r.VelFwd / r.TrotParameters.StepFrequency
+			stepLengthsLft[l] = r.VelLft / r.TrotParameters.StepFrequency
 		}
 	}
 
 	// Convert to gait
-	globalDown := sp.DirDown.Mul(r.BodyHeight).Rotated(bodyRotation)
+	globalDown := sp.DirDown.Mul(r.TrotParameters.BodyHeight).Rotated(bodyRotation)
 	for _, l := range sp.AllLegs {
 		// Get the gait offset
-		up := r.GaitParameters.VerticalOffsetFromFloor(pushForces[l], clks[l])
-		fwd := r.GaitParameters.HorizontalOffset(stepLengthsFwd[l], clks[l])
-		lft := r.GaitParameters.HorizontalOffset(stepLengthsLft[l], clks[l])
+		up := r.TrotParameters.GaitParameters.VerticalOffsetFromFloor(pushForces[l], clks[l])
+		fwd := r.TrotParameters.GaitParameters.HorizontalOffset(stepLengthsFwd[l], clks[l])
+		lft := r.TrotParameters.GaitParameters.HorizontalOffset(stepLengthsLft[l], clks[l])
 		// This offset is in local rotation space. We want to rotate it to global space
 		offsetRelative := sp.DirUp.Mul(up).Add(sp.DirForward.Mul(fwd)).Add(sp.DirLeft.Mul(lft))
 		offset := offsetRelative.Rotated(bodyRotation)
@@ -144,7 +145,7 @@ func (r *Robot) updateStand(offset sp.Vec3) {
 }
 
 func (r *Robot) updateBalance(bodyRotation sp.Quat) {
-	globalDown := sp.DirDown.Mul(r.BodyHeight).Rotated(bodyRotation)
+	globalDown := sp.DirDown.Mul(r.TrotParameters.BodyHeight).Rotated(bodyRotation)
 	for _, l := range sp.AllLegs {
 		floorPos := r.Quadruped.ShoulderVec(l).Inv().Add(globalDown).Add(r.Quadruped.ShoulderVec(l)).Add(r.Quadruped.ShoulderVec(l).Rotated(bodyRotation))
 		r.Quadruped.SetLegPosition(l, floorPos)

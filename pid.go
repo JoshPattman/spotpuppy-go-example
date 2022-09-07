@@ -5,8 +5,9 @@ package main
 import "time"
 
 type PIController struct {
-	Current, Target float64
-	Kp, Ki          float64
+	Current, Target float64 `json:"-"`
+	Kp              float64 `json:"kp"`
+	Ki              float64 `json:"ki"`
 	i               float64
 	lastUpdate      time.Time
 }
