@@ -9,6 +9,16 @@ import (
 	sp "github.com/JoshPattman/spotpuppy-go"
 )
 
+type RobotMode int
+
+const (
+	ModeStand RobotMode = iota
+	ModeStandTall
+	ModeStandFL
+	ModeBalance
+	ModeTrot
+)
+
 type Robot struct {
 	Quadruped      *sp.Quadruped
 	RotationSensor sp.RotationSensor
@@ -17,6 +27,7 @@ type Robot struct {
 	GaitParameters *GaitParameters
 	StepFrequency  float64
 	BodyHeight     float64
+	Mode           RobotMode
 }
 
 func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSensor) *Robot {
@@ -32,6 +43,7 @@ func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSens
 		},
 		StepFrequency: 2,
 		BodyHeight:    8,
+		Mode:          ModeStand,
 	}
 }
 
@@ -43,7 +55,18 @@ func (r *Robot) Update() {
 	// Rotation
 	bodyRotation := r.RotationSensor.GetQuaternion().NoYaw()
 	//hasFallen := sp.DirUp.AngleTo(sp.DirUp.Rotated(bodyRotation)) > 30
-	r.updateTrot(bodyRotation)
+	switch r.Mode {
+	case ModeStand:
+		r.updateStand(sp.NewVector3(0, 0, 0))
+	case ModeStandTall:
+		r.updateStand(sp.DirDown.Mul(3))
+	case ModeStandFL:
+		r.updateStand(sp.DirForward.Mul(3).Add(sp.DirLeft.Mul(3)))
+	case ModeBalance:
+		r.updateBalance(bodyRotation)
+	case ModeTrot:
+		r.updateTrot(bodyRotation)
+	}
 }
 
 // For now, this makes no attempt to right itself, instead will just slowly fall over
@@ -80,5 +103,19 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 
 		// Set foot pos
 		r.Quadruped.SetLegPosition(l, floorPos.Add(offset))
+	}
+}
+
+func (r *Robot) updateStand(offset sp.Vec3) {
+	for _, l := range sp.AllLegs {
+		r.Quadruped.SetLegPosition(l, r.Quadruped.Legs[l].GetRestingPosition().Add(offset))
+	}
+}
+
+func (r *Robot) updateBalance(bodyRotation sp.Quat) {
+	globalDown := sp.DirDown.Mul(r.BodyHeight).Rotated(bodyRotation)
+	for _, l := range sp.AllLegs {
+		floorPos := r.Quadruped.ShoulderVec(l).Inv().Add(globalDown).Add(r.Quadruped.ShoulderVec(l)).Add(r.Quadruped.ShoulderVec(l).Rotated(bodyRotation))
+		r.Quadruped.SetLegPosition(l, floorPos)
 	}
 }
