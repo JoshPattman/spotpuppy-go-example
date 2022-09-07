@@ -69,7 +69,11 @@ func (r *Robot) Update() {
 	}
 }
 
-// For now, this makes no attempt to right itself, instead will just slowly fall over
+// The basic idea of this tro algo is as follows:
+// -> Each leg has push force proportional to how far the robot is tilting towards it
+// -> Generate floor offsets from gait.go file with the push forces descibed above. Each diagonal leg pair has the same timing for its gait (both pairs are offset by half a cycle from each other)
+// -> Calculate the position on the floor directly below each shoulder (this takes into account the body rotation)
+// -> Add the floor offsets to this position on the floor. Each leg should now be trotting
 func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 	// Clocks
 	clkA := math.Mod(r.t, 1.0)
@@ -86,6 +90,18 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 	}
 
 	// TODO : Here is where we need to write code to determine push forces and step lengths
+	{
+		pushMult := 1.0
+		rotatedUp := sp.DirUp.Rotated(bodyRotation)
+		// Positive means tilting forwards
+		forwardsRot := math.Asin(sp.DirForward.Dot(rotatedUp))
+		// Positive means tilting left
+		leftRot := math.Asin(sp.DirLeft.Dot(rotatedUp))
+		pushForces[sp.LegFrontLeft] = pushMult * (forwardsRot + leftRot)
+		pushForces[sp.LegFrontRight] = pushMult * (forwardsRot - leftRot)
+		pushForces[sp.LegBackLeft] = pushMult * (-forwardsRot + leftRot)
+		pushForces[sp.LegBackRight] = pushMult * (-forwardsRot - leftRot)
+	}
 
 	// Convert to gait
 	globalDown := sp.DirDown.Mul(r.BodyHeight).Rotated(bodyRotation)
