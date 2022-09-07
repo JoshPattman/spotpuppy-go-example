@@ -1,5 +1,7 @@
 package main
 
+// The reason I am choosing to use a PI not a PID controller is that the accelerometer readings are very shaky, which can easily confuse PID d terms
+
 import "time"
 
 type PIController struct {

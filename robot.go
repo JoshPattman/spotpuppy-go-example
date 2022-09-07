@@ -20,14 +20,15 @@ const (
 )
 
 type Robot struct {
-	Quadruped      *sp.Quadruped
-	RotationSensor sp.RotationSensor
-	t              float64
-	lastUpdate     time.Time
-	GaitParameters *GaitParameters
-	StepFrequency  float64
-	BodyHeight     float64
-	Mode           RobotMode
+	Quadruped            *sp.Quadruped
+	RotationSensor       sp.RotationSensor
+	t                    float64
+	lastUpdate           time.Time
+	GaitParameters       *GaitParameters
+	StepFrequency        float64
+	BodyHeight           float64
+	Mode                 RobotMode
+	PushPIFwd, PushPILft *PIController
 }
 
 func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSensor) *Robot {
@@ -44,6 +45,8 @@ func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSens
 		StepFrequency: 2,
 		BodyHeight:    8,
 		Mode:          ModeStand,
+		PushPIFwd:     NewPIController(1, 0),
+		PushPILft:     NewPIController(1, 0),
 	}
 }
 
@@ -91,16 +94,22 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 
 	// TODO : Here is where we need to write code to determine push forces and step lengths
 	{
-		pushMult := 1.0
+		// Calculate rotated upwards vector
 		rotatedUp := sp.DirUp.Rotated(bodyRotation)
+
+		// Calculate PID values from tilting forwards and left angles
 		// Positive means tilting forwards
-		forwardsRot := math.Asin(sp.DirForward.Dot(rotatedUp))
+		r.PushPIFwd.Current = math.Asin(sp.DirForward.Dot(rotatedUp))
 		// Positive means tilting left
-		leftRot := math.Asin(sp.DirLeft.Dot(rotatedUp))
-		pushForces[sp.LegFrontLeft] = pushMult * (forwardsRot + leftRot)
-		pushForces[sp.LegFrontRight] = pushMult * (forwardsRot - leftRot)
-		pushForces[sp.LegBackLeft] = pushMult * (-forwardsRot + leftRot)
-		pushForces[sp.LegBackRight] = pushMult * (-forwardsRot - leftRot)
+		r.PushPILft.Current = math.Asin(sp.DirLeft.Dot(rotatedUp))
+		pushFwd := r.PushPIFwd.NextAdjustment()
+		pushLft := r.PushPILft.NextAdjustment()
+
+		// Set the push forces of each leg
+		pushForces[sp.LegFrontLeft] = pushFwd + pushLft
+		pushForces[sp.LegFrontRight] = pushFwd - pushLft
+		pushForces[sp.LegBackLeft] = -pushFwd + pushLft
+		pushForces[sp.LegBackRight] = -pushFwd - pushLft
 	}
 
 	// Convert to gait
