@@ -52,9 +52,13 @@ func main() {
 	// load the quadruped settings from file
 	fmt.Println("Loading config from disk")
 	if _, err := os.Stat("quad.json"); err != nil {
-		r.Quadruped.SaveToFile("quad.json")
+		if err = r.Quadruped.SaveToFile("quad.json"); err != nil {
+			panic(err)
+		}
 	}
-	r.Quadruped.LoadFromFile("quad.json")
+	if err := r.Quadruped.LoadFromFile("quad.json"); err != nil {
+		panic(err)
+	}
 
 	// update the robot at 100 times per second
 	fmt.Println("Updating robot")
