@@ -83,6 +83,15 @@ func (r *Robot) Update() {
 	}
 }
 
+// Calculates the position of a foot such that no matter how the body is rotated, the foot stays in the same place in global space.
+// It does this by adding these vectors: (shoulder -> robot center) + (robot center -> position below robot center in global space) + (robot center -> shoulder in global space)
+func calcFloorPos(q *sp.Quadruped, leg string, bodyRotation sp.Quat, height float64) sp.Vec3 {
+	svRobot := q.ShoulderVec(leg)
+	svGlobal := svRobot.Rotated(bodyRotation.Inv())
+	downGlobal := sp.DirDown.Mul(height).Rotated(bodyRotation.Inv())
+	return svRobot.Inv().Add(downGlobal).Add(svGlobal)
+}
+
 // The basic idea of this tro algo is as follows:
 // -> Each leg has push force proportional to how far the robot is tilting towards it
 // -> Generate floor offsets from gait.go file with the push forces descibed above. Each diagonal leg pair has the same timing for its gait (both pairs are offset by half a cycle from each other)
@@ -129,7 +138,6 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 	}
 
 	// Convert to gait
-	globalDown := sp.DirDown.Mul(r.TrotParameters.BodyHeight).Rotated(bodyRotation)
 	for _, l := range sp.AllLegs {
 		// Get the gait offset
 		up := r.TrotParameters.GaitParameters.VerticalOffsetFromFloor(pushForces[l], clks[l])
@@ -140,7 +148,7 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 		offset := offsetRelative.Rotated(bodyRotation)
 
 		// Get the floor pos
-		floorPos := r.Quadruped.ShoulderVec(l).Inv().Add(globalDown).Add(r.Quadruped.ShoulderVec(l)).Add(r.Quadruped.ShoulderVec(l).Rotated(bodyRotation))
+		floorPos := calcFloorPos(r.Quadruped, l, bodyRotation, r.TrotParameters.BodyHeight)
 
 		// Set foot pos
 		r.Quadruped.SetLegPosition(l, floorPos.Add(offset))
@@ -154,9 +162,8 @@ func (r *Robot) updateStand(offset sp.Vec3) {
 }
 
 func (r *Robot) updateBalance(bodyRotation sp.Quat) {
-	globalDown := sp.DirDown.Mul(r.TrotParameters.BodyHeight).Rotated(bodyRotation)
 	for _, l := range sp.AllLegs {
-		floorPos := r.Quadruped.ShoulderVec(l).Inv().Add(globalDown).Add(r.Quadruped.ShoulderVec(l)).Add(r.Quadruped.ShoulderVec(l).Rotated(bodyRotation))
+		floorPos := calcFloorPos(r.Quadruped, l, bodyRotation, r.TrotParameters.BodyHeight)
 		r.Quadruped.SetLegPosition(l, floorPos)
 	}
 }
