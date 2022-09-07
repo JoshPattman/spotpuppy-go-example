@@ -12,11 +12,18 @@ import (
 type RobotMode int
 
 const (
+	// For tuning the servos to have the correct 0 positions by having all servos go to their resting pos
 	ModeStand RobotMode = iota
+	// For flipping the knee and thigh servos so that they are the correct way round by putting all feet lower than their resting pos
 	ModeStandTall
+	// For flipping the thigh and hip servos so that they are the correct way round by pointing all legs towards the front left
 	ModeStandFL
+	// For checking the gyro is working by always keeping the legs on a flat plane no matter what rotation the body is at
 	ModeBalance
+	// For moving around with a balanced walk
 	ModeTrot
+	// For checking the gyro alignment is correct by pointing the legs towards the direction the robot is leaning
+	ModePoint
 )
 
 type TrotParameters struct {
@@ -71,6 +78,8 @@ func (r *Robot) Update() {
 		r.updateBalance(bodyRotation)
 	case ModeTrot:
 		r.updateTrot(bodyRotation)
+	case ModePoint:
+		r.updateModePoint(bodyRotation)
 	}
 }
 
@@ -149,5 +158,14 @@ func (r *Robot) updateBalance(bodyRotation sp.Quat) {
 	for _, l := range sp.AllLegs {
 		floorPos := r.Quadruped.ShoulderVec(l).Inv().Add(globalDown).Add(r.Quadruped.ShoulderVec(l)).Add(r.Quadruped.ShoulderVec(l).Rotated(bodyRotation))
 		r.Quadruped.SetLegPosition(l, floorPos)
+	}
+}
+func (r *Robot) updateModePoint(bodyRotation sp.Quat) {
+	globalUp := sp.DirUp.Rotated(bodyRotation)
+	pointForward := globalUp.Dot(sp.DirForward)
+	pointLeft := globalUp.Dot(sp.DirLeft)
+	offset := sp.DirForward.Mul(pointForward).Add(sp.DirLeft.Mul(pointLeft))
+	for _, l := range sp.AllLegs {
+		r.Quadruped.SetLegPosition(l, r.Quadruped.Legs[l].GetRestingPosition().Add(offset))
 	}
 }
