@@ -10,13 +10,11 @@
 * 3S LiPo battery
 * 3D printed robot ([repo](https://github.com/JoshPattman/spotpuppy-models))
 ## Files
-### `conf.json`
+### `quad.json`
 This contains the configuration for the robot, such as joint offsets and which ports each servo is plugged into. You will probably have to modify this for your robot.
-### `conf_gait.json`
-This contains the gait config, such as step height and step speed
-### `myRobot.go`
+### `robot.go`
 This contains the walking algorithm and actual usage of the `spotpuppy-go` module. It also contains all of the code for making the robot stand and balance.
 ### `main.go`
 This is the main file that runs the rest of the code. On RPi it will create a robot with a functional movement controller and rotation sensor, however on other platforms it will use dummy controller for these (they don't work on windows/x64 linux). It also contains the code to make the robot update at a fixed timestep of 100 times per second
-### `restControl.go`
-This contains code for starting a REST api for high level control of the robot. This is so, for example, computer vision code can be coded in python but the robot can run all control code in go. The instructions sent over are high level (set velocity forward to 2cm/s)
+### `gait.go`
+This contains code for generating foot position offsets from the floor to make the robot trot. It is not concerned with the rotation/coordinate systems of the robot, but instead is simply a couple of functions that take some parameters for a step and a time, and return position offsets.

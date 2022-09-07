@@ -1,0 +1,63 @@
+{
+	"legs": {
+		"back_left": {
+			"reverse_knee_joint": false,
+			"reverse_hip_x_joint": false,
+			"reverse_hip_z_joint": false,
+			"flip_x_axis": false,
+			"knee_offset": 0,
+			"hip_x_offset": 0,
+			"hip_z_offset": 0,
+			"bone_length": 6
+		},
+		"back_right": {
+			"reverse_knee_joint": false,
+			"reverse_hip_x_joint": false,
+			"reverse_hip_z_joint": false,
+			"flip_x_axis": false,
+			"knee_offset": 0,
+			"hip_x_offset": 0,
+			"hip_z_offset": 0,
+			"bone_length": 6
+		},
+		"front_left": {
+			"reverse_knee_joint": false,
+			"reverse_hip_x_joint": false,
+			"reverse_hip_z_joint": false,
+			"flip_x_axis": false,
+			"knee_offset": 0,
+			"hip_x_offset": 0,
+			"hip_z_offset": 0,
+			"bone_length": 6
+		},
+		"front_right": {
+			"reverse_knee_joint": false,
+			"reverse_hip_x_joint": false,
+			"reverse_hip_z_joint": false,
+			"flip_x_axis": false,
+			"knee_offset": 0,
+			"hip_x_offset": 0,
+			"hip_z_offset": 0,
+			"bone_length": 6
+		}
+	},
+	"motor_controller": {
+		"mapping": {
+			"back_left.hip_x": -1,
+			"back_left.hip_z": -1,
+			"back_left.knee": -1,
+			"back_right.hip_x": -1,
+			"back_right.hip_z": -1,
+			"back_right.knee": -1,
+			"front_left.hip_x": -1,
+			"front_left.hip_z": -1,
+			"front_left.knee": 2,
+			"front_right.hip_x": -1,
+			"front_right.hip_z": -1,
+			"front_right.knee": -1,
+			"neck": -1
+		}
+	},
+	"body_dimension_x": 14.6,
+	"body_dimension_z": 10.8
+}
