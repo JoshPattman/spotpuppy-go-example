@@ -2,6 +2,8 @@ module spotpuppy-proto
 
 require github.com/JoshPattman/spotpuppy-go v0.1.0
 
+require github.com/simulatedsimian/joystick v1.0.1
+
 require (
 	github.com/googolgl/go-i2c v0.1.1 // indirect
 	github.com/googolgl/go-pca9685 v0.1.5 // indirect
