@@ -69,14 +69,14 @@ func (r *Robot) Update() {
 
 	// Rotation
 	bodyRotation := r.RotationSensor.GetQuaternion().NoYaw()
-	//hasFallen := sp.DirUp.AngleTo(sp.DirUp.Rotated(bodyRotation)) > 30
+	//hasFallen := sp.Up.AngleTo(sp.Up.Rotated(bodyRotation)) > 30
 	switch r.Mode {
 	case ModeStand:
 		r.updateStand(sp.NewVector3(0, 0, 0))
 	case ModeStandTall:
-		r.updateStand(sp.DirDown.Mul(3))
+		r.updateStand(sp.Down.Mul(3))
 	case ModeStandFL:
-		r.updateStand(sp.DirForward.Mul(3).Add(sp.DirLeft.Mul(3)))
+		r.updateStand(sp.Forward.Mul(3).Add(sp.Left.Mul(3)))
 	case ModeBalance:
 		r.updateBalance(bodyRotation)
 	case ModeTrot:
@@ -91,11 +91,11 @@ func (r *Robot) Update() {
 func calcFloorPos(q *sp.Quadruped, leg string, bodyRotation sp.Quat, height float64) sp.Vec3 {
 	svRobot := q.ShoulderVec(leg)
 	svGlobal := svRobot.Rotated(bodyRotation.Inv())
-	downGlobal := sp.DirDown.Mul(height).Rotated(bodyRotation.Inv())
+	downGlobal := sp.Down.Mul(height).Rotated(bodyRotation.Inv())
 	return svRobot.Inv().Add(downGlobal).Add(svGlobal)
 }
 
-// The basic idea of this tro algo is as follows:
+// The basic idea of this trot algo is as follows:
 // -> Each leg has push force proportional to how far the robot is tilting towards it
 // -> Generate floor offsets from gait.go file with the push forces descibed above. Each diagonal leg pair has the same timing for its gait (both pairs are offset by half a cycle from each other)
 // -> Calculate the position on the floor directly below each shoulder (this takes into account the body rotation)
@@ -118,13 +118,13 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat, dt float64) {
 	// Here is where we write code to determine push forces and step lengths
 	{
 		// Calculate rotated upwards vector
-		rotatedUp := sp.DirUp.Rotated(bodyRotation)
+		rotatedUp := sp.Up.Rotated(bodyRotation)
 
 		// Calculate PID values from tilting forwards and left angles
 		// Positive means tilting forwards
-		r.TrotParameters.PushPIFwd.Current = math.Asin(sp.DirForward.Dot(rotatedUp))
+		r.TrotParameters.PushPIFwd.Current = math.Asin(sp.Forward.Dot(rotatedUp))
 		// Positive means tilting left
-		r.TrotParameters.PushPILft.Current = math.Asin(sp.DirLeft.Dot(rotatedUp))
+		r.TrotParameters.PushPILft.Current = math.Asin(sp.Left.Dot(rotatedUp))
 		pushFwd := r.TrotParameters.PushPIFwd.NextAdjustment()
 		pushLft := r.TrotParameters.PushPILft.NextAdjustment()
 
@@ -152,7 +152,7 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat, dt float64) {
 		fwd := r.TrotParameters.GaitParameters.HorizontalOffset(stepLengthsFwd[l], clks[l])
 		lft := r.TrotParameters.GaitParameters.HorizontalOffset(stepLengthsLft[l], clks[l])
 		// This offset is in local rotation space. We want to rotate it to global space
-		offsetRelative := sp.DirUp.Mul(up).Add(sp.DirForward.Mul(fwd)).Add(sp.DirLeft.Mul(lft))
+		offsetRelative := sp.Up.Mul(up).Add(sp.Forward.Mul(fwd)).Add(sp.Left.Mul(lft))
 		offset := offsetRelative.Rotated(bodyRotation)
 
 		// Get the floor pos
@@ -176,10 +176,10 @@ func (r *Robot) updateBalance(bodyRotation sp.Quat) {
 	}
 }
 func (r *Robot) updateModePoint(bodyRotation sp.Quat) {
-	globalUp := sp.DirUp.Rotated(bodyRotation)
-	pointForward := globalUp.Dot(sp.DirForward)
-	pointLeft := globalUp.Dot(sp.DirLeft)
-	offset := sp.DirForward.Mul(pointForward).Add(sp.DirLeft.Mul(pointLeft))
+	globalUp := sp.Up.Rotated(bodyRotation)
+	pointForward := globalUp.Dot(sp.Forward)
+	pointLeft := globalUp.Dot(sp.Left)
+	offset := sp.Forward.Mul(pointForward).Add(sp.Left.Mul(pointLeft))
 	for _, l := range sp.AllLegs {
 		r.Quadruped.SetLegPosition(l, r.Quadruped.Legs[l].GetRestingPosition().Add(offset))
 	}
