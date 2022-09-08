@@ -48,12 +48,12 @@
 			"MaxPulse": 2250
 		},
 		"mapping": {
-			"back_left.hip_x": -1,
-			"back_left.hip_z": -1,
-			"back_left.knee": -1,
-			"back_right.hip_x": -1,
-			"back_right.hip_z": -1,
-			"back_right.knee": -1,
+			"back_left.hip_x": 13,
+			"back_left.hip_z": 11,
+			"back_left.knee": 15,
+			"back_right.hip_x": 12,
+			"back_right.hip_z": 10,
+			"back_right.knee": 14,
 			"front_left.hip_x": 3,
 			"front_left.hip_z": 5,
 			"front_left.knee": 1,
