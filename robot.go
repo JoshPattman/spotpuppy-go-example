@@ -27,21 +27,23 @@ const (
 )
 
 type TrotParameters struct {
-	GaitParameters *GaitParameters `json:"gait-gen-params"`
-	StepFrequency  float64         `json:"step-freq"`
-	BodyHeight     float64         `json:"body-height"`
-	PushPIFwd      *PIController   `json:"push-force-pi-fwd"`
-	PushPILft      *PIController   `json:"push-force-pi-lft"`
+	GaitParameters     *GaitParameters `json:"gait-gen-params"`
+	StepFrequency      float64         `json:"step-freq"`
+	BodyHeight         float64         `json:"body-height"`
+	DirectAcceleration float64         `json:"direct-acceleration"`
+	PushPIFwd          *PIController   `json:"push-force-pi-fwd"`
+	PushPILft          *PIController   `json:"push-force-pi-lft"`
 }
 
 type Robot struct {
-	Quadruped      *sp.Quadruped
-	RotationSensor sp.RotationSensor
-	t              float64
-	lastUpdate     time.Time
-	TrotParameters *TrotParameters
-	Mode           RobotMode
-	VelFwd, VelLft float64
+	Quadruped                  *sp.Quadruped
+	RotationSensor             sp.RotationSensor
+	t                          float64
+	lastUpdate                 time.Time
+	TrotParameters             *TrotParameters
+	Mode                       RobotMode
+	VelFwd, VelLft             float64
+	smoothVelFwd, smoothVelLft float64
 }
 
 func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSensor) *Robot {
@@ -61,7 +63,8 @@ func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSens
 
 func (r *Robot) Update() {
 	// Timekeeping
-	r.t += time.Since(r.lastUpdate).Seconds() * r.TrotParameters.StepFrequency
+	dt := time.Since(r.lastUpdate).Seconds()
+	r.t += dt * r.TrotParameters.StepFrequency
 	r.lastUpdate = time.Now()
 
 	// Rotation
@@ -77,7 +80,7 @@ func (r *Robot) Update() {
 	case ModeBalance:
 		r.updateBalance(bodyRotation)
 	case ModeTrot:
-		r.updateTrot(bodyRotation)
+		r.updateTrot(bodyRotation, dt)
 	case ModePoint:
 		r.updateModePoint(bodyRotation)
 	}
@@ -97,7 +100,7 @@ func calcFloorPos(q *sp.Quadruped, leg string, bodyRotation sp.Quat, height floa
 // -> Generate floor offsets from gait.go file with the push forces descibed above. Each diagonal leg pair has the same timing for its gait (both pairs are offset by half a cycle from each other)
 // -> Calculate the position on the floor directly below each shoulder (this takes into account the body rotation)
 // -> Add the floor offsets to this position on the floor. Each leg should now be trotting
-func (r *Robot) updateTrot(bodyRotation sp.Quat) {
+func (r *Robot) updateTrot(bodyRotation sp.Quat, dt float64) {
 	// Clocks
 	clkA := math.Mod(r.t, 1.0)
 	clkB := math.Mod(r.t+0.5, 1.0)
@@ -112,7 +115,7 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 		stepLengthsFwd[l], stepLengthsLft[l], pushForces[l] = 0, 0, 0
 	}
 
-	// TODO : Here is where we need to write code to determine push forces and step lengths
+	// Here is where we write code to determine push forces and step lengths
 	{
 		// Calculate rotated upwards vector
 		rotatedUp := sp.DirUp.Rotated(bodyRotation)
@@ -131,6 +134,11 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat) {
 		pushForces[sp.LegBackLeft] = -pushFwd + pushLft
 		pushForces[sp.LegBackRight] = -pushFwd - pushLft
 
+		// Move the actual velocities towards the targets
+		r.smoothVelFwd = moveTowardsFloat(r.smoothVelFwd, r.VelFwd, r.TrotParameters.DirectAcceleration*dt)
+		r.smoothVelLft = moveTowardsFloat(r.smoothVelLft, r.VelLft, r.TrotParameters.DirectAcceleration*dt)
+
+		// Calculate and apply the step lengths given the velocities and frequency
 		for _, l := range sp.AllLegs {
 			stepLengthsFwd[l] = r.VelFwd / r.TrotParameters.StepFrequency
 			stepLengthsLft[l] = r.VelLft / r.TrotParameters.StepFrequency
@@ -175,4 +183,16 @@ func (r *Robot) updateModePoint(bodyRotation sp.Quat) {
 	for _, l := range sp.AllLegs {
 		r.Quadruped.SetLegPosition(l, r.Quadruped.Legs[l].GetRestingPosition().Add(offset))
 	}
+}
+
+func moveTowardsFloat(current, target, velocity float64) float64 {
+	d := target - current
+	if d == 0 {
+		return target
+	}
+	sign := d / math.Abs(d)
+	if d/sign < velocity {
+		return target
+	}
+	return sign*velocity + current
 }
