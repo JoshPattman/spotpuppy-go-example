@@ -84,6 +84,7 @@ func (r *Robot) Update() {
 	case ModePoint:
 		r.updateModePoint(bodyRotation)
 	}
+	r.Quadruped.Update()
 }
 
 // Calculates the position of a foot such that no matter how the body is rotated, the foot stays in the same place in global space.

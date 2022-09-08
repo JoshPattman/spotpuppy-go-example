@@ -33,7 +33,8 @@ func main() {
 	} else {
 		r = NewRobot(
 			sp.NewPCAMotorController(),
-			sp.NewArduinoRotationSensor("/dev/ttyUSB0", sp.AxesRemap{X: "x", Y: "y", Z: "z"}),
+			//sp.NewArduinoRotationSensor("/dev/ttyUSB0", sp.AxesRemap{X: "x", Y: "y", Z: "z"}),
+			sp.NewDummyRotationSensor(),
 		)
 		fmt.Println("Created PCA and arduino robot")
 	}
@@ -101,14 +102,13 @@ func main() {
 				panic(err)
 			}
 		}
-
 		// begin updating the robot velocities in the background
 		if useJoystick {
 			go RunJSController(js, r)
 		}
 		// update the robot at 100 times per second
 		fmt.Println("Updating robot")
-		ups := sp.NewUPSTimer(100)
+		ups := sp.NewUPSTimer(50)
 		for {
 			r.Update()
 			ups.WaitForNext()
