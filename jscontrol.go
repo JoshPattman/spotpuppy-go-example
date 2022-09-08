@@ -15,6 +15,11 @@ const (
 	AxisYaw      = 0
 	AxisRoll     = 3
 	AxisPitch    = 4
+
+	ButtonX = 0
+	ButtonO = 1
+	ButtonT = 2
+	ButtonS = 3
 )
 
 // Connect to the first joystick that was connected to the computer. Will panic if fails
@@ -27,16 +32,36 @@ func ConnectToJS() joystick.Joystick {
 	return js
 }
 
+func pressed(buttons uint32, button int) bool {
+	return (buttons>>button)&0x01 == 1
+}
+func pressedDown(buttons, lastbuttons uint32, button int) bool {
+	return (!pressed(lastbuttons, button)) && (pressed(buttons, button))
+}
+
 // This runs the joystick control in the background. It is designed to be run as a goroutine in the background
 func RunJSController(js joystick.Joystick, r *Robot) {
 	normalizeRange := func(x int) float64 { return -float64(x) / 32767.0 }
+	var lastbuttons uint32
 	for {
+		// Read current state
 		state, err := js.Read()
 		if err != nil {
 			panic(err)
 		}
+		// Do stuff with inputs
 		r.VelFwd = normalizeRange(state.AxisData[AxisPitch])
 		r.VelLft = normalizeRange(state.AxisData[AxisRoll])
+		if r.Mode != ModeStand && pressedDown(state.Buttons, lastbuttons, ButtonX) {
+			r.Mode = ModeStand
+		}
+
+		if r.Mode != ModeTrot && pressedDown(state.Buttons, lastbuttons, ButtonS) {
+			r.Mode = ModeTrot
+		}
+
+		// Wait for next update
+		lastbuttons = state.Buttons
 		time.Sleep(time.Second / 10)
 	}
 }

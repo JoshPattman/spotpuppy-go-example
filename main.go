@@ -68,7 +68,7 @@ func main() {
 		case "balance":
 			r.Mode = ModeBalance
 		case "trot-js":
-			r.Mode = ModeTrot
+			r.Mode = ModeStand
 			useJoystick = true
 		case "point":
 			r.Mode = ModePoint
