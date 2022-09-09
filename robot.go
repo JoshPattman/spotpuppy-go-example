@@ -3,6 +3,7 @@ package main
 // This is the new robot logic. I have not finished writing it yet
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -68,7 +69,9 @@ func (r *Robot) Update() {
 	r.lastUpdate = time.Now()
 
 	// Rotation
-	bodyRotation := r.RotationSensor.GetQuaternion() //.NoYaw()
+	bodyRotation := r.RotationSensor.GetQuaternion()
+	bodyRotationCorrected := bodyRotation.NoYaw()
+	fmt.Println(bodyRotationCorrected.Apply(sp.Up))
 	//hasFallen := sp.Up.AngleTo(sp.Up.Rotated(bodyRotation)) > 30
 	switch r.Mode {
 	case ModeStand:
@@ -78,11 +81,11 @@ func (r *Robot) Update() {
 	case ModeStandFL:
 		r.updateStand(sp.Forward.Mul(3).Add(sp.Left.Mul(3)))
 	case ModeBalance:
-		r.updateBalance(bodyRotation)
+		r.updateBalance(bodyRotationCorrected)
 	case ModeTrot:
-		r.updateTrot(bodyRotation, dt)
+		r.updateTrot(bodyRotationCorrected, dt)
 	case ModePoint:
-		r.updateModePoint(bodyRotation)
+		r.updateModePoint(bodyRotationCorrected)
 	}
 	r.Quadruped.Update()
 }

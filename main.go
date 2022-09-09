@@ -90,11 +90,6 @@ func main() {
 		if err := r.Quadruped.LoadFromFile(configFile + "/config.json"); err != nil {
 			panic(err)
 		}
-		// Make the robot stand whilst everything else loads
-		m := r.Mode
-		r.Mode = ModeStand
-		r.Update()
-		r.Mode = m
 		// load the gait settings from file
 		if data, err := os.ReadFile(configFile + "/gait.json"); err != nil {
 			panic(err)
@@ -111,6 +106,11 @@ func main() {
 				panic(err)
 			}
 			r.RotationSensor.Setup()
+			// Make the robot stand whilst calibrating
+			m := r.Mode
+			r.Mode = ModeStand
+			r.Update()
+			r.Mode = m
 			fmt.Println("Calibrating sensor")
 			time.Sleep(time.Second)
 			r.RotationSensor.Calibrate()
