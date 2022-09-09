@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"time"
 
 	sp "github.com/JoshPattman/spotpuppy-go"
 	"github.com/simulatedsimian/joystick"
@@ -31,9 +32,8 @@ func main() {
 		r = NewRobot(sp.NewDummyMotorController(), sp.NewDummyRotationSensor())
 		fmt.Println("Created dummy robot (as we are not on a rpi)")
 	} else {
-		var sensor sp.RotationSensor
-		sensor = sp.NewArduinoRotationSensor()
-		//sensor = sp.NewDummyRotationSensor()
+		sensor := sp.NewRawArduinoRotationSensor()
+		//sensor := sp.NewDummyRotationSensor()
 		r = NewRobot(
 			sp.NewPCAMotorController(),
 			sensor,
@@ -90,6 +90,12 @@ func main() {
 		if err := r.Quadruped.LoadFromFile(configFile + "/config.json"); err != nil {
 			panic(err)
 		}
+		// Make the robot stand whilst everything else loads
+		m := r.Mode
+		r.Mode = ModeStand
+		r.Update()
+		r.Mode = m
+		// load the gait settings from file
 		if data, err := os.ReadFile(configFile + "/gait.json"); err != nil {
 			panic(err)
 		} else {
@@ -97,6 +103,7 @@ func main() {
 				panic(err)
 			}
 		}
+		// load the rotation sensor settings from file
 		if data, err := os.ReadFile(configFile + "/rot.json"); err != nil {
 			panic(err)
 		} else {
@@ -105,6 +112,7 @@ func main() {
 			}
 			r.RotationSensor.Setup()
 			fmt.Println("Calibrating sensor")
+			time.Sleep(time.Second)
 			r.RotationSensor.Calibrate()
 		}
 		// begin updating the robot velocities in the background
@@ -113,6 +121,7 @@ func main() {
 		}
 		// update the robot at 100 times per second
 		fmt.Println("Updating robot")
+		time.Sleep(time.Second)
 		ups := sp.NewUPSTimer(50)
 		for {
 			r.Update()

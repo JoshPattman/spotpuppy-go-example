@@ -1,6 +1,6 @@
 module spotpuppy-proto
 
-require github.com/JoshPattman/spotpuppy-go v0.1.7
+require github.com/JoshPattman/spotpuppy-go v0.1.8
 
 require github.com/simulatedsimian/joystick v1.0.1
 

@@ -1,5 +1,5 @@
-github.com/JoshPattman/spotpuppy-go v0.1.7 h1:6qlQ07tmmzj/gbXxki1Ct782FSOKaf/YBJG4qJca5e4=
-github.com/JoshPattman/spotpuppy-go v0.1.7/go.mod h1:T5f1Ej8HL4XPL2RoJvjtBH+txCz/BKF/9s+6v6IENY0=
+github.com/JoshPattman/spotpuppy-go v0.1.8 h1:nYourfn5i/z9N+Tgn5fB5xCItgUUuJeJroiA4BoMfHc=
+github.com/JoshPattman/spotpuppy-go v0.1.8/go.mod h1:T5f1Ej8HL4XPL2RoJvjtBH+txCz/BKF/9s+6v6IENY0=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/googolgl/go-i2c v0.0.5/go.mod h1:ZAqTSwjnPXqglNaEixRmgAUatGpTMm0xyJp/wK6ZDgk=
