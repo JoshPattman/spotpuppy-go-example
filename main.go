@@ -31,10 +31,12 @@ func main() {
 		r = NewRobot(sp.NewDummyMotorController(), sp.NewDummyRotationSensor())
 		fmt.Println("Created dummy robot (as we are not on a rpi)")
 	} else {
+		var sensor sp.RotationSensor
+		sensor = sp.NewArduinoRotationSensor()
+		//sensor = sp.NewDummyRotationSensor()
 		r = NewRobot(
 			sp.NewPCAMotorController(),
-			//sp.NewArduinoRotationSensor("/dev/ttyUSB0", sp.AxesRemap{X: "x", Y: "y", Z: "z"}),
-			sp.NewDummyRotationSensor(),
+			sensor,
 		)
 		fmt.Println("Created PCA and arduino robot")
 	}
@@ -101,6 +103,9 @@ func main() {
 			if err = json.Unmarshal(data, r.RotationSensor); err != nil {
 				panic(err)
 			}
+			r.RotationSensor.Setup()
+			fmt.Println("Calibrating sensor")
+			r.RotationSensor.Calibrate()
 		}
 		// begin updating the robot velocities in the background
 		if useJoystick {

@@ -68,7 +68,7 @@ func (r *Robot) Update() {
 	r.lastUpdate = time.Now()
 
 	// Rotation
-	bodyRotation := r.RotationSensor.GetQuaternion().NoYaw()
+	bodyRotation := r.RotationSensor.GetQuaternion() //.NoYaw()
 	//hasFallen := sp.Up.AngleTo(sp.Up.Rotated(bodyRotation)) > 30
 	switch r.Mode {
 	case ModeStand:
@@ -182,7 +182,7 @@ func (r *Robot) updateModePoint(bodyRotation sp.Quat) {
 	pointLeft := globalUp.Dot(sp.Left)
 	offset := sp.Forward.Mul(pointForward).Add(sp.Left.Mul(pointLeft))
 	for _, l := range sp.AllLegs {
-		r.Quadruped.SetLegPosition(l, r.Quadruped.Legs[l].GetRestingPosition().Add(offset))
+		r.Quadruped.SetLegPosition(l, r.Quadruped.Legs[l].GetRestingPosition().Add(offset.Mul(5)))
 	}
 }
 
