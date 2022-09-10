@@ -8,11 +8,11 @@
 	"body-height": 8,
 	"direct-acceleration":1,
 	"push-force-pi-fwd": {
-		"kp": 0,
+		"kp": 10,
 		"ki": 0
 	},
 	"push-force-pi-lft": {
-		"kp": 0,
+		"kp": 10,
 		"ki": 0
 	}
 }

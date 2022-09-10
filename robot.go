@@ -115,60 +115,27 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat, dt float64) {
 	clks[sp.LegFrontLeft], clks[sp.LegBackRight] = clkA, clkA
 	clks[sp.LegFrontRight], clks[sp.LegBackLeft] = clkB, clkB
 
+	// Move the actual velocities towards the targets
+	r.smoothVelFwd = moveTowardsFloat(r.smoothVelFwd, r.VelFwd, r.TrotParameters.DirectAcceleration*dt)
+	r.smoothVelLft = moveTowardsFloat(r.smoothVelLft, r.VelLft, r.TrotParameters.DirectAcceleration*dt)
+
+	// Calculating lean amounts
+	globalUp := sp.Up.Rotated(bodyRotation)
+	rbtLeanedFwd, rbtLeanedLft := globalUp.Dot(sp.Forward), globalUp.Dot(sp.Left)
+
 	// Dynamic params
-	stepLengthsFwd, stepLengthsLft := make(map[string]float64), make(map[string]float64)
-	pushForces := make(map[string]float64)
-	for _, l := range sp.AllLegs {
-		stepLengthsFwd[l], stepLengthsLft[l], pushForces[l] = 0, 0, 0
-	}
-
-	// Here is where we write code to determine push forces and step lengths
-	{
-		// Calculate rotated upwards vector
-		rotatedUp := sp.Up.Rotated(bodyRotation)
-
-		// Calculate PID values from tilting forwards and left angles
-		// Positive means tilting forwards
-		r.TrotParameters.PushPIFwd.Current = math.Asin(sp.Forward.Dot(rotatedUp))
-		// Positive means tilting left
-		r.TrotParameters.PushPILft.Current = math.Asin(sp.Left.Dot(rotatedUp))
-		pushFwd := r.TrotParameters.PushPIFwd.NextAdjustment()
-		pushLft := r.TrotParameters.PushPILft.NextAdjustment()
-		//fmt.Println(r.TrotParameters.PushPIFwd.i, r.TrotParameters.PushPILft.i)
-
-		// Set the push forces of each leg
-		pushForces[sp.LegFrontLeft] = -pushFwd - pushLft
-		pushForces[sp.LegFrontRight] = -pushFwd + pushLft
-		pushForces[sp.LegBackLeft] = pushFwd - pushLft
-		pushForces[sp.LegBackRight] = pushFwd + pushLft
-
-		// Move the actual velocities towards the targets
-		r.smoothVelFwd = moveTowardsFloat(r.smoothVelFwd, r.VelFwd, r.TrotParameters.DirectAcceleration*dt)
-		r.smoothVelLft = moveTowardsFloat(r.smoothVelLft, r.VelLft, r.TrotParameters.DirectAcceleration*dt)
-
-		// Calculate and apply the step lengths given the velocities and frequency
-		for _, l := range sp.AllLegs {
-			stepLengthsFwd[l] = r.VelFwd / r.TrotParameters.StepFrequency
-			stepLengthsLft[l] = r.VelLft / r.TrotParameters.StepFrequency
-		}
-	}
+	r.TrotParameters.PushPIFwd.Current, r.TrotParameters.PushPILft.Current = rbtLeanedFwd, rbtLeanedLft
+	leanFwd, leanLft := -r.TrotParameters.PushPIFwd.NextAdjustment(), -r.TrotParameters.PushPILft.NextAdjustment()
 
 	// Convert to gait
 	for _, l := range sp.AllLegs {
 		// Get the gait offset
-		up := r.TrotParameters.GaitParameters.VerticalOffsetFromFloor(pushForces[l], clks[l])
-		fwd := r.TrotParameters.GaitParameters.HorizontalOffset(stepLengthsFwd[l], clks[l])
-		lft := r.TrotParameters.GaitParameters.HorizontalOffset(stepLengthsLft[l], clks[l])
-		// This offset is in local rotation space. We want to rotate it to global space
-		offsetRelative := sp.Up.Mul(up).Add(sp.Forward.Mul(fwd)).Add(sp.Left.Mul(lft))
-		offset := offsetRelative.Rotated(bodyRotation.Inv())
+		gaitUp := r.TrotParameters.GaitParameters.VerticalOffsetFromFloor(0, clks[l])
+		gaitOffset := sp.Up.Mul(gaitUp)
 
-		// Get the floor pos
-		floorPos := calcFloorPos(r.Quadruped, l, bodyRotation, r.TrotParameters.BodyHeight)
-		//floorPos = sp.Down.Mul(r.TrotParameters.BodyHeight)
+		floorPos := sp.Down.Mul(r.TrotParameters.BodyHeight)
 
-		// Set foot pos
-		r.Quadruped.SetLegPosition(l, floorPos.Add(offset))
+		r.Quadruped.SetLegPosition(l, floorPos.Add(gaitOffset).Add(sp.Forward.Mul(leanFwd)).Add(sp.Left.Mul(leanLft)))
 	}
 }
 
