@@ -3,7 +3,6 @@ package main
 // This is the new robot logic. I have not finished writing it yet
 
 import (
-	"fmt"
 	"math"
 	"time"
 
@@ -71,21 +70,25 @@ func (r *Robot) Update() {
 	// Rotation
 	bodyRotation := r.RotationSensor.GetQuaternion()
 	bodyRotationCorrected := bodyRotation.NoYaw()
-	fmt.Println(bodyRotationCorrected.Apply(sp.Up))
-	//hasFallen := sp.Up.AngleTo(sp.Up.Rotated(bodyRotation)) > 30
-	switch r.Mode {
-	case ModeStand:
-		r.updateStand(sp.NewVector3(0, 0, 0))
-	case ModeStandTall:
-		r.updateStand(sp.Down.Mul(3))
-	case ModeStandFL:
-		r.updateStand(sp.Forward.Mul(3).Add(sp.Left.Mul(3)))
-	case ModeBalance:
-		r.updateBalance(bodyRotationCorrected)
-	case ModeTrot:
-		r.updateTrot(bodyRotationCorrected, dt)
-	case ModePoint:
-		r.updateModePoint(bodyRotationCorrected)
+	//fmt.Println(bodyRotationCorrected.Apply(sp.Up))
+	hasFallen := sp.Up.AngleTo(sp.Up.Rotated(bodyRotation)) > 30
+	if !hasFallen {
+		switch r.Mode {
+		case ModeStand:
+			r.updateStand(sp.NewVector3(0, 0, 0))
+		case ModeStandTall:
+			r.updateStand(sp.Down.Mul(3))
+		case ModeStandFL:
+			r.updateStand(sp.Forward.Mul(3).Add(sp.Left.Mul(3)))
+		case ModeBalance:
+			r.updateBalance(bodyRotationCorrected)
+		case ModeTrot:
+			r.updateTrot(bodyRotationCorrected, dt)
+		case ModePoint:
+			r.updateModePoint(bodyRotationCorrected)
+		}
+	} else {
+		r.updateStand(sp.Up.Mul(3))
 	}
 	r.Quadruped.Update()
 }
@@ -131,12 +134,13 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat, dt float64) {
 		r.TrotParameters.PushPILft.Current = math.Asin(sp.Left.Dot(rotatedUp))
 		pushFwd := r.TrotParameters.PushPIFwd.NextAdjustment()
 		pushLft := r.TrotParameters.PushPILft.NextAdjustment()
+		//fmt.Println(r.TrotParameters.PushPIFwd.i, r.TrotParameters.PushPILft.i)
 
 		// Set the push forces of each leg
-		pushForces[sp.LegFrontLeft] = pushFwd + pushLft
-		pushForces[sp.LegFrontRight] = pushFwd - pushLft
-		pushForces[sp.LegBackLeft] = -pushFwd + pushLft
-		pushForces[sp.LegBackRight] = -pushFwd - pushLft
+		pushForces[sp.LegFrontLeft] = -pushFwd - pushLft
+		pushForces[sp.LegFrontRight] = -pushFwd + pushLft
+		pushForces[sp.LegBackLeft] = pushFwd - pushLft
+		pushForces[sp.LegBackRight] = pushFwd + pushLft
 
 		// Move the actual velocities towards the targets
 		r.smoothVelFwd = moveTowardsFloat(r.smoothVelFwd, r.VelFwd, r.TrotParameters.DirectAcceleration*dt)
@@ -157,10 +161,11 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat, dt float64) {
 		lft := r.TrotParameters.GaitParameters.HorizontalOffset(stepLengthsLft[l], clks[l])
 		// This offset is in local rotation space. We want to rotate it to global space
 		offsetRelative := sp.Up.Mul(up).Add(sp.Forward.Mul(fwd)).Add(sp.Left.Mul(lft))
-		offset := offsetRelative.Rotated(bodyRotation)
+		offset := offsetRelative.Rotated(bodyRotation.Inv())
 
 		// Get the floor pos
 		floorPos := calcFloorPos(r.Quadruped, l, bodyRotation, r.TrotParameters.BodyHeight)
+		//floorPos = sp.Down.Mul(r.TrotParameters.BodyHeight)
 
 		// Set foot pos
 		r.Quadruped.SetLegPosition(l, floorPos.Add(offset))

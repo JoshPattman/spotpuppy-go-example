@@ -20,7 +20,7 @@ var generateConfig bool
 
 func main() {
 	// Parse cli
-	flag.StringVar(&mode, "m", "stand", "the operation for the robot to do (one of: 'trot-in-place', 'trot-forwards', 'stand', 'stand-tall', 'stand-front-left', 'balance', 'trot-js', 'point')")
+	flag.StringVar(&mode, "m", "stand", "the operation for the robot to do (one of: 'trot-in-place', 'trot-forwards', 'stand', 'stand-tall', 'stand-front-left', 'balance', 'trot-js', 'point', 'release')")
 	flag.StringVar(&configFile, "f", "conf-dummy", "the filename of the robot config")
 	flag.BoolVar(&generateConfig, "g", false, "if this is true then instead of running the robot, a config file will instead be generated")
 	flag.Parse()
@@ -75,6 +75,8 @@ func main() {
 			useJoystick = true
 		case "point":
 			r.Mode = ModePoint
+		case "release":
+			os.Exit(0)
 		default:
 			panic("Mode not recognised")
 		}
