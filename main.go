@@ -122,7 +122,7 @@ func main() {
 		// update the robot at 100 times per second
 		fmt.Println("Updating robot")
 		time.Sleep(time.Second)
-		ups := sp.NewUPSTimer(50)
+		ups := sp.NewUPSTimer(100)
 		for {
 			r.Update()
 			ups.WaitForNext()
