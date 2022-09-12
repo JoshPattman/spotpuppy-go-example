@@ -19,6 +19,18 @@ var configFile string
 var generateConfig bool
 
 func main() {
+	ik := NewHipThighKneeIK()
+	ik.HipLengthDown = 2
+	ik.HipLengthLeft = 1
+	ik.ThighLength = 6
+	ik.ShinLength = 6
+	fmt.Println(ik.GetRestingPosition())
+	fmt.Println(ik.CalculateMotorRotations(ik.GetRestingPosition()))
+	fmt.Println(ik.CalculateMotorRotations(sp.Down.Mul(12)))
+	fmt.Println(ik.CalculateMotorRotations(sp.Down.Mul(12).Add(sp.Forward.Mul(3))))
+}
+
+func main2() {
 	// Parse cli
 	flag.StringVar(&mode, "m", "stand", "the operation for the robot to do (one of: 'trot-in-place', 'trot-forwards', 'stand', 'stand-tall', 'stand-front-left', 'balance', 'trot-js', 'point', 'release')")
 	flag.StringVar(&configFile, "f", "conf-dummy", "the filename of the robot config")

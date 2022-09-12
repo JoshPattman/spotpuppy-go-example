@@ -44,10 +44,11 @@ type Robot struct {
 	Mode                       RobotMode
 	VelFwd, VelLft             float64
 	smoothVelFwd, smoothVelLft float64
+	lastFall                   time.Time
 }
 
 func NewRobot(motorController sp.MotorController, rotationSensor sp.RotationSensor) *Robot {
-	q := sp.NewQuadruped(sp.NewDirectMotorIKGenerator(), motorController)
+	q := sp.NewQuadruped(func() sp.LegIK { return NewHipThighKneeIK() }, motorController)
 	return &Robot{
 		Quadruped:      q,
 		RotationSensor: rotationSensor,
@@ -71,8 +72,8 @@ func (r *Robot) Update() {
 	bodyRotation := r.RotationSensor.GetQuaternion()
 	bodyRotationCorrected := bodyRotation.NoYaw()
 	//fmt.Println(bodyRotationCorrected.Apply(sp.Up))
-	hasFallen := sp.Up.AngleTo(sp.Up.Rotated(bodyRotation)) > 30
-	if !hasFallen {
+	hasFallen := sp.Up.AngleTo(sp.Up.Rotated(bodyRotation)) > 45
+	if !hasFallen && time.Since(r.lastFall).Seconds() > 1 {
 		switch r.Mode {
 		case ModeStand:
 			r.updateStand(sp.NewVector3(0, 0, 0))
@@ -89,6 +90,9 @@ func (r *Robot) Update() {
 		}
 	} else {
 		r.updateStand(sp.Up.Mul(3))
+		if hasFallen {
+			r.lastFall = time.Now()
+		}
 	}
 	r.Quadruped.Update()
 }
@@ -96,10 +100,11 @@ func (r *Robot) Update() {
 // Calculates the position of a foot such that no matter how the body is rotated, the foot stays in the same place in global space.
 // It does this by adding these vectors: (shoulder -> robot center) + (robot center -> position below robot center in global space) + (robot center -> shoulder in global space)
 func calcFloorPos(q *sp.Quadruped, leg string, bodyRotation sp.Quat, height float64) sp.Vec3 {
-	svRobot := q.ShoulderVec(leg)
-	svGlobal := svRobot.Rotated(bodyRotation.Inv())
+	//svRobot := q.ShoulderVec(leg)
+	// We use Inv() here as we are rotating a vector from global space to robot space
+	//svGlobal := svRobot.Rotated(bodyRotation.Inv())
 	downGlobal := sp.Down.Mul(height).Rotated(bodyRotation.Inv())
-	return svRobot.Inv().Add(downGlobal).Add(svGlobal)
+	return downGlobal //svRobot.Inv().Add(downGlobal).Add(svGlobal)
 }
 
 // The basic idea of this trot algo is as follows:
@@ -141,7 +146,8 @@ func (r *Robot) updateTrot(bodyRotation sp.Quat, dt float64) {
 
 func (r *Robot) updateStand(offset sp.Vec3) {
 	for _, l := range sp.AllLegs {
-		r.Quadruped.SetLegPosition(l, r.Quadruped.Legs[l].GetRestingPosition().Add(offset))
+		//r.Quadruped.SetLegPosition(l, r.Quadruped.Legs[l].GetRestingPosition().Add(offset))
+		r.Quadruped.SetLegPosition(l, sp.Down.Mul(10))
 	}
 }
 

@@ -1,0 +1,51 @@
+{
+	"legs": {
+		"back_left": {
+			"HipLengthDown": 2,
+			"HipLengthLeft": 1,
+			"ThighLength": 6,
+			"ShinLength": 6
+		},
+		"back_right": {
+			"HipLengthDown": 2,
+			"HipLengthLeft": 1,
+			"ThighLength": 6,
+			"ShinLength": 6
+		},
+		"front_left": {
+			"HipLengthDown": 2,
+			"HipLengthLeft": 1,
+			"ThighLength": 6,
+			"ShinLength": 6
+		},
+		"front_right": {
+			"HipLengthDown": 2,
+			"HipLengthLeft": 1,
+			"ThighLength": 6,
+			"ShinLength": 6
+		}
+	},
+	"motor_controller": {
+		"servo-options": {
+			"AcRange": 135,
+			"MinPulse": 750,
+			"MaxPulse": 2250
+		},
+		"mapping": {
+			"back_left.hip_x": 13,
+			"back_left.hip_z": 11,
+			"back_left.knee": 15,
+			"back_right.hip_x": 12,
+			"back_right.hip_z": 10,
+			"back_right.knee": 14,
+			"front_left.hip_x": 3,
+			"front_left.hip_z": 5,
+			"front_left.knee": 1,
+			"front_right.hip_x": 2,
+			"front_right.hip_z": 4,
+			"front_right.knee": 0
+		}
+	},
+	"body_dimension_x": 14.6,
+	"body_dimension_z": 10.8
+}
